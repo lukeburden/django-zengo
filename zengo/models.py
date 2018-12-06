@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 from django.contrib.auth import get_user_model
+# TODO: use alternative to JSONField if Postgres not in use?
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -78,7 +80,7 @@ class Event(models.Model):
         app_label = 'zengo'
 
     raw_data = models.TextField()
-    json = models.JSONField(null=True, blank=True)
+    json = JSONField(null=True, blank=True)
     created = models.DateTimeField(default=timezone.now)
     processed = models.BooleanField(default=False)
     # if processing failed there was an error, it will appear here
