@@ -39,7 +39,7 @@ class Ticket(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
-    zendesk_user = models.ForeignKey(ZendeskUser)
+    zendesk_user = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     subject = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     url = models.URLField(null=True, blank=True)
@@ -63,8 +63,8 @@ class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
-    ticket = models.ForeignKey(Ticket)
-    author = models.ForeignKey(ZendeskUser)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    author = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
     public = models.BooleanField()
     created = models.DateTimeField()
@@ -84,5 +84,5 @@ class Event(models.Model):
     # if processing failed there was an error, it will appear here
     error = models.TextField(null=True, blank=True)
     # these should be populated if it was processed OK
-    ticket = models.ForeignKey(Ticket, null=True, blank=True)
-    actor = models.ForeignKey(ZendeskUser, null=True, blank=True)
+    ticket = models.ForeignKey(Ticket, null=True, blank=True, on_delete=models.SET_NULL)
+    actor = models.ForeignKey(ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL)
