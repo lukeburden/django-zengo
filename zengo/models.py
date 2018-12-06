@@ -28,7 +28,7 @@ class ZendeskUser(models.Model):
     zendesk_id = models.BigIntegerField(unique=True)
     name = models.TextField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
-    user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT)
     created = models.DateTimeField()
 
 
