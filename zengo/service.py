@@ -13,10 +13,10 @@ from django_pglocks import advisory_lock
 from zenpy import Zenpy
 
 from . import signals
-from . models import Comment
-from . models import Event
-from . models import Ticket
-from . models import ZendeskUser
+from .models import Comment
+from .models import Event
+from .models import Ticket
+from .models import ZendeskUser
 
 
 def get_user_for_external_id(external_id):
@@ -28,8 +28,8 @@ def get_user_for_external_id(external_id):
 @contextlib.contextmanager
 def ticket_lock(ticket_id):
     # currently we lock for postgres/postgis only
-    if 'postg' in settings.DATABASES['default']['ENGINE']:
-        with advisory_lock('zengo-ticket-{}'.format(ticket_id)):
+    if "postg" in settings.DATABASES["default"]["ENGINE"]:
+        with advisory_lock("zengo-ticket-{}".format(ticket_id)):
             yield
     else:
         yield
@@ -37,9 +37,9 @@ def ticket_lock(ticket_id):
 
 def get_zenpy_client():
     creds = {
-        'email': settings.ZENDESK_EMAIL,
-        'token': settings.ZENDESK_TOKEN,
-        'subdomain': settings.ZENDESK_SUBDOMAIN
+        "email": settings.ZENDESK_EMAIL,
+        "token": settings.ZENDESK_TOKEN,
+        "subdomain": settings.ZENDESK_SUBDOMAIN,
     }
     return Zenpy(**creds)
 
@@ -54,7 +54,7 @@ def store_event(data):
         raise ValidationError(e.message)
     else:
         event.json = data
-        event.save(update_fields=('json',))
+        event.save(update_fields=("json",))
     return event
 
 
@@ -68,11 +68,11 @@ def process_event(event):
     """
     # minimum we need to get sync'ing is a ZD ticket ID
     try:
-        ticket_id = int(event.json['id'])
+        ticket_id = int(event.json["id"])
     except KeyError:
-        raise ValidationError('`id` not found in data')
+        raise ValidationError("`id` not found in data")
     except ValueError:
-        raise ValidationError('`id` not found in data')
+        raise ValidationError("`id` not found in data")
 
     # we lock on the ticket ID, so we never double up on
     # processing
@@ -100,8 +100,8 @@ def sync_ticket(zd_ticket):
             url=zd_ticket.url,
             status=Ticket.states.by_id.get(zd_ticket.status.lower()),
             created=zd_ticket.created_at,
-            updated=zd_ticket.updated_at
-        )
+            updated=zd_ticket.updated_at,
+        ),
     )
 
     # sync comments that exist - for a new ticket, there may be none
@@ -114,13 +114,10 @@ def sync_ticket(zd_ticket):
         signals.new_ticket.send(sender=Ticket, ticket=ticket)
 
     elif len(comments) > len(pre_comments):
-        new_comment_ids = (
-            set([c.zendesk_id for c in comments]) -
-            set([c.zendesk_id for c in pre_comments])
+        new_comment_ids = set([c.zendesk_id for c in comments]) - set(
+            [c.zendesk_id for c in pre_comments]
         )
-        new_comments = [
-            c for c in comments if c.zendesk_id in new_comment_ids
-        ]
+        new_comments = [c for c in comments if c.zendesk_id in new_comment_ids]
         if new_comments:
             signals.new_comments.send(
                 sender=Ticket, ticket=ticket, comments=new_comments
@@ -136,8 +133,8 @@ def sync_user(zendesk_user):
         defaults=dict(
             email=zendesk_user.email,
             created=zendesk_user.created_at,
-            name=zendesk_user.name
-        )
+            name=zendesk_user.name,
+        ),
     )
     return instance
 
@@ -145,9 +142,7 @@ def sync_user(zendesk_user):
 def sync_comments(zd_ticket, ticket):
     comments = []
     # no need to sync the ticket requester as we'll have just done that
-    user_map = {
-        zd_ticket.requester: ticket.zendesk_user
-    }
+    user_map = {zd_ticket.requester: ticket.zendesk_user}
     for comment in get_zenpy_client().tickets.comments(zd_ticket.id):
         if comment.author not in user_map:
             author = sync_user(comment.author)
@@ -162,8 +157,8 @@ def sync_comments(zd_ticket, ticket):
                 author=author,
                 body=comment.body,
                 public=comment.public,
-                created=comment.created_at
-            )
+                created=comment.created_at,
+            ),
         )
         comments.append(instance)
     # sort increasing by created and id

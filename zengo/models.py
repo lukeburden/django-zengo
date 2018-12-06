@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.contrib.auth import get_user_model
+
 # TODO: use alternative to JSONField if Postgres not in use?
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -24,20 +25,21 @@ class ZendeskUser(models.Model):
     """
 
     class Meta:
-        app_label = 'zengo'
+        app_label = "zengo"
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
     name = models.TextField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
-    user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT)
+    user = models.ForeignKey(
+        AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT
+    )
     created = models.DateTimeField()
 
 
 class Ticket(models.Model):
-
     class Meta:
-        app_label = 'zengo'
+        app_label = "zengo"
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
@@ -46,12 +48,12 @@ class Ticket(models.Model):
     description = models.TextField(null=True, blank=True)
     url = models.URLField(null=True, blank=True)
     states = Constants(
-        Constant(new='new'),
-        Constant(open='open'),
-        Constant(pending='pending'),
-        Constant(hold='hold'),
-        Constant(solved='solved'),
-        Constant(closed='closed')
+        Constant(new="new"),
+        Constant(open="open"),
+        Constant(pending="pending"),
+        Constant(hold="hold"),
+        Constant(solved="solved"),
+        Constant(closed="closed"),
     )
     status = ConstantChoiceCharField(constants=states, max_length=8)
     created = models.DateTimeField()
@@ -59,9 +61,8 @@ class Ticket(models.Model):
 
 
 class Comment(models.Model):
-
     class Meta:
-        app_label = 'zengo'
+        app_label = "zengo"
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
@@ -75,9 +76,8 @@ class Comment(models.Model):
 
 
 class Event(models.Model):
-
     class Meta:
-        app_label = 'zengo'
+        app_label = "zengo"
 
     raw_data = models.TextField()
     json = JSONField(null=True, blank=True)
@@ -87,4 +87,6 @@ class Event(models.Model):
     error = models.TextField(null=True, blank=True)
     # these should be populated if it was processed OK
     ticket = models.ForeignKey(Ticket, null=True, blank=True, on_delete=models.SET_NULL)
-    actor = models.ForeignKey(ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL)
+    actor = models.ForeignKey(
+        ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL
+    )

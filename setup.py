@@ -50,7 +50,7 @@ setup(
         "Framework :: Django",
     ],
     install_requires=[
-        "django>=1.11"
+        "django>=1.11",
     ],
     test_suite="runtests.runtests",
     tests_require=tests_require,

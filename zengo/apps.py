@@ -5,6 +5,5 @@ from django.apps import AppConfig
 
 
 class ZengoConfig(AppConfig):
-    name = 'zengo'
-    label = 'zendesk'
-
+    name = "zengo"
+    label = "zendesk"

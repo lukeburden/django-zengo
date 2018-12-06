@@ -2,10 +2,9 @@
 
 [![](https://img.shields.io/pypi/v/django-zengo.svg)](https://pypi.python.org/pypi/django-zengo/)
 [![](https://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/django-zengo/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Codecov](https://codecov.io/gh/lukeburden/django-zengo/branch/master/graph/badge.svg)](https://codecov.io/gh/lukeburden/django-zengo)
 [![CircleCI](https://circleci.com/gh/lukeburden/django-zengo.svg?style=svg)](https://circleci.com/gh/lukeburden/django-zengo)
-![](https://img.shields.io/github/contributors/lukeburden/django-zengo.svg)
-![](https://img.shields.io/github/issues-pr/lukeburden/django-zengo.svg)
 
 
 ## django-zengo
