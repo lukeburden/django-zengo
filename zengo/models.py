@@ -1,11 +1,18 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
-# TODO: use alternative to JSONField if Postgres not in use?
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
+
+# TODO: use alternative to JSONField if Postgres not in use?
+using_postgres = "postg" in settings.DATABASES["default"]["ENGINE"]
+
+if using_postgres:
+    from django.contrib.postgres.fields import JSONField
+else:
+    from jsonfield import JSONField
 
 
 class ZendeskUser(models.Model):
@@ -80,7 +87,9 @@ class Event(models.Model):
     # if processing failed there was an error, it will appear here
     error = models.TextField(null=True, blank=True)
     # these should be populated if it was processed OK
-    ticket = models.ForeignKey(Ticket, null=True, blank=True, related_name="events", on_delete=models.SET_NULL)
+    ticket = models.ForeignKey(
+        Ticket, null=True, blank=True, related_name="events", on_delete=models.SET_NULL
+    )
     actor = models.ForeignKey(
         ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL
     )

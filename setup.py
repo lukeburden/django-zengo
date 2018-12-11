@@ -54,7 +54,8 @@ setup(
         "zenpy>=2,<3",
         "django-konst>=1,<2",
         "django-pglocks>=1,<2",
-        "psycopg2-binary>=2,<3"
+        "psycopg2-binary>=2,<3",
+        "jsonfield>=2,<3"
     ],
     test_suite="runtests.runtests",
     tests_require=tests_require,

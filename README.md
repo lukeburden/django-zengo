@@ -15,7 +15,71 @@ It facilitates receiving webhook updates from Zendesk and detecting new tickets 
 
 ### Installation ####
 
+pip install django-zengo
+
+
 ### Usage ###
+
+#### Configuring the webhook ####
+
+Zengo comes with a view that processes messages sent by Zendesk and allows you to perform actions upon various Zendesk events.
+
+##### Expose `zengo.views.WebhookView` #####
+
+You need to configure your application to receive the webhook. To do so simply include it in your URL conf:
+
+```python
+from django.contrib import admin
+from django.urls import path
+
+from zengo.views import WebhookView
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('zengo/webhook/', WebhookView.as_view())
+]
+```
+
+###### Configure Zendesk to send events ######
+
+Zendesk allows for many integrations, but for the purposes of Zengo we just need to be told when a ticket has been changed.
+
+Log in as an administrator in Zendesk, and visit `Settings > Extensions > Targets > add target > HTTP target`.
+
+Add an HTTP target with a URL of your service, and choose the `POST` method.
+
+Note: for development, I recommend using `ngrok` to proxy requests through to your localhost.
+
+Next, you must configure a trigger to use the target. Visit `Business Rules > Triggers > Add trigger`. Add a condition that suits your needs, such as, `Ticket is updated`, or `Ticket is created`, and select an action of `Notify target`, selecting the previously configured target. For JSON body, enter the following: 
+
+```json
+{
+    "id": "{{ ticket.id }}"
+}
+```
+
+You're done! Now whenever a ticket is created or updated in Zendesk, you should have an event being processed in your application.
+
+#### Performing actions upon receiving Zendesk events ####
+
+When Zengo receives a webhook from Zendesk, it will fire a signal indicating what has happened. In your application, you need to attach receivers to the signal that is most relevant to your need.
+
+```python
+from django.dispatch import receiver
+
+from zengo.signals import new_ticket
+
+
+@receiver(new_ticket)
+def handle_new_ticket(sender, ticket, **kwargs):
+    # perform your custom action here
+    pass
+```
+
+#### Signals ####
+
+- some signal
+- another signal
 
 ## Contribute
 

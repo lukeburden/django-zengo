@@ -7,33 +7,38 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('zengo', '0001_initial'),
-    ]
+    dependencies = [("zengo", "0001_initial")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='comment',
-            name='notified',
-        ),
+        migrations.RemoveField(model_name="comment", name="notified"),
         migrations.AddField(
-            model_name='ticket',
-            name='custom_fields',
+            model_name="ticket",
+            name="custom_fields",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='ticket',
-            name='tags',
+            model_name="ticket",
+            name="tags",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='ticket',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tickets', to='zengo.Ticket'),
+            model_name="comment",
+            name="ticket",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="tickets",
+                to="zengo.Ticket",
+            ),
         ),
         migrations.AlterField(
-            model_name='event',
-            name='ticket',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='events', to='zengo.Ticket'),
+            model_name="event",
+            name="ticket",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="events",
+                to="zengo.Ticket",
+            ),
         ),
     ]

@@ -20,7 +20,6 @@ from .models import ZendeskUser
 
 
 class UserAdapter(object):
-
     def get_user_for_external_id(self, external_id):
         return get_user_model().objects.filter(id=external_id).first()
 
@@ -139,7 +138,12 @@ def sync_ticket(zd_ticket):
                 sender=Ticket, ticket=ticket, comments=new_comments
             )
 
-    if not is_new_ticket and pre_ticket.custom_fields != ticket.custom_fields:
+    if (
+        not is_new_ticket
+        and pre_ticket
+        and pre_ticket.custom_fields != ticket.custom_fields
+    ):
+        print(ticket.custom_fields)
         print("Custom fields have changed!")
 
     # # except tags will always have changed it custom fields have changed due
