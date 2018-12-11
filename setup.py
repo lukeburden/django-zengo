@@ -50,7 +50,11 @@ setup(
         "Framework :: Django",
     ],
     install_requires=[
-        "django>=1.11",
+        "django>=1.11,<3",
+        "zenpy>=2,<3",
+        "django-konst>=1,<2",
+        "django-pglocks>=1,<2",
+        "psycopg2-binary>=2,<3"
     ],
     test_suite="runtests.runtests",
     tests_require=tests_require,

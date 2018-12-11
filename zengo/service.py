@@ -19,10 +19,20 @@ from .models import Ticket
 from .models import ZendeskUser
 
 
+class UserAdapter(object):
+
+    def get_user_for_external_id(self, external_id):
+        return get_user_model().objects.filter(id=external_id).first()
+
+
+def get_user_adapter():
+    return UserAdapter()
+
+
 def get_user_for_external_id(external_id):
     # allow variation in how we identify a local user record
     # based on the external id stored in Zendesk
-    return get_user_model().objects.filter(slug=external_id).first()
+    return get_user_adapter().get_user_for_external_id(external_id)
 
 
 @contextlib.contextmanager
@@ -99,6 +109,8 @@ def sync_ticket(zd_ticket):
             description=zd_ticket.description,
             url=zd_ticket.url,
             status=Ticket.states.by_id.get(zd_ticket.status.lower()),
+            custom_fields=zd_ticket.custom_fields,
+            tags=zd_ticket.tags,
             created=zd_ticket.created_at,
             updated=zd_ticket.updated_at,
         ),
@@ -110,8 +122,11 @@ def sync_ticket(zd_ticket):
 
     # it's possible the ticket isn't new but this is the first we're
     # seeing of it, so only fire the new_ticket if there are no comments
-    if created and not comments:
+    is_new_ticket = created and not comments
+
+    if is_new_ticket:
         signals.new_ticket.send(sender=Ticket, ticket=ticket)
+        print("New ticket!")
 
     elif len(comments) > len(pre_comments):
         new_comment_ids = set([c.zendesk_id for c in comments]) - set(
@@ -119,9 +134,18 @@ def sync_ticket(zd_ticket):
         )
         new_comments = [c for c in comments if c.zendesk_id in new_comment_ids]
         if new_comments:
+            print("New comments!")
             signals.new_comments.send(
                 sender=Ticket, ticket=ticket, comments=new_comments
             )
+
+    if not is_new_ticket and pre_ticket.custom_fields != ticket.custom_fields:
+        print("Custom fields have changed!")
+
+    # # except tags will always have changed it custom fields have changed due
+    # # to how Zendesk has implemented this
+    # if not created and pre_ticket.tags != ticket.tags:
+    #     print("Tags have changed!")
 
     return ticket
 

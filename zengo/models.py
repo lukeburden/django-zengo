@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.contrib.auth import get_user_model
-
 # TODO: use alternative to JSONField if Postgres not in use?
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -10,9 +6,6 @@ from django.utils import timezone
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
-
-
-AUTH_USER_MODEL = get_user_model()
 
 
 class ZendeskUser(models.Model):
@@ -32,7 +25,7 @@ class ZendeskUser(models.Model):
     name = models.TextField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     user = models.ForeignKey(
-        AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT
+        get_user_model(), null=True, blank=True, on_delete=models.PROTECT
     )
     created = models.DateTimeField()
 
@@ -56,6 +49,9 @@ class Ticket(models.Model):
         Constant(closed="closed"),
     )
     status = ConstantChoiceCharField(constants=states, max_length=8)
+    # custom fields and tags are stored here, relatively unprocessed
+    custom_fields = JSONField(null=True, blank=True)
+    tags = JSONField(null=True, blank=True)
     created = models.DateTimeField()
     updated = models.DateTimeField(null=True, blank=True)
 
@@ -66,13 +62,11 @@ class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    ticket = models.ForeignKey(Ticket, related_name="tickets", on_delete=models.CASCADE)
     author = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
     public = models.BooleanField()
     created = models.DateTimeField()
-    # our custom fields
-    notified = models.BooleanField(default=False)
 
 
 class Event(models.Model):
@@ -86,7 +80,7 @@ class Event(models.Model):
     # if processing failed there was an error, it will appear here
     error = models.TextField(null=True, blank=True)
     # these should be populated if it was processed OK
-    ticket = models.ForeignKey(Ticket, null=True, blank=True, on_delete=models.SET_NULL)
+    ticket = models.ForeignKey(Ticket, null=True, blank=True, related_name="events", on_delete=models.SET_NULL)
     actor = models.ForeignKey(
         ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL
     )
