@@ -7,7 +7,7 @@ from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
 from django.views.generic.base import View
 
-from .service import process_event, store_event
+from .service import get_service
 from .settings import app_settings
 
 
@@ -26,9 +26,10 @@ class WebhookView(View):
     def post(self, request):
         if not self.validate_secret():
             return HttpResponseForbidden("Secret missing or wrong")
+        service = get_service()
         try:
-            event = store_event(request.body)
+            event = service.store_event(request.body)
         except ValidationError:
             return HttpResponseBadRequest()
-        process_event(event)
+        service.process_event(event)
         return HttpResponse()

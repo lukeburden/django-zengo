@@ -1,7 +1,7 @@
 from django.conf import settings
 
 
-DEFAULTS = {"BACKEND_CLASS": None, "WEBHOOK_SECRET": None}
+DEFAULTS = {"SERVICE_CLASS": None, "WEBHOOK_SECRET": None}
 
 
 class AppSettings(object):

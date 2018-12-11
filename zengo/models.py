@@ -6,10 +6,9 @@ from django.utils import timezone
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
 
-# TODO: use alternative to JSONField if Postgres not in use?
-using_postgres = "postg" in settings.DATABASES["default"]["ENGINE"]
-
-if using_postgres:
+# detect both postgres and postgis, upon which we use their native
+# JSONField
+if "postg" in settings.DATABASES["default"]["ENGINE"]:
     from django.contrib.postgres.fields import JSONField
 else:
     from jsonfield import JSONField
