@@ -5,14 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('zengo', '0002_auto_20181211_0131'),
-    ]
+    dependencies = [("zengo", "0002_auto_20181211_0131")]
 
     operations = [
         migrations.RenameField(
-            model_name='ticket',
-            old_name='zendesk_user',
-            new_name='requester',
-        ),
+            model_name="ticket", old_name="zendesk_user", new_name="requester"
+        )
     ]

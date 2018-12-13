@@ -111,13 +111,13 @@ class ZengoService(object):
                     name=self.get_local_user_name(local_user),
                     external_id=self.get_local_user_external_id(local_user),
                     email=local_user.email,
-                    remote_photo_url=self.get_local_user_profile_image(local_user)
+                    remote_photo_url=self.get_local_user_profile_image(local_user),
                 )
             )
         except APIException as a:
             # if this is a duplicate error try one last time to get the user
-            details = a.response.json()['details']
-            if any([d[0]['error'] for d in details.values()]):
+            details = a.response.json()["details"]
+            if any([d[0]["error"] for d in details.values()]):
                 remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
                     local_user
                 )
@@ -265,8 +265,7 @@ class ZengoService(object):
         return (NewTicketDetector, NewCommentDetector, CustomFieldsChangedDetector)
 
     def detect_changes(
-        self, pre_ticket, post_ticket, pre_comments, post_comments,
-        is_new_ticket=False
+        self, pre_ticket, post_ticket, pre_comments, post_comments, is_new_ticket=False
     ):
         """
         Take a mapping of detector instances and run them.
@@ -275,11 +274,11 @@ class ZengoService(object):
         to look for, along with a signal to fire when it finds the change.
         """
         change_context = {
-            'pre_ticket': pre_ticket,
-            'post_ticket': post_ticket,
-            'pre_comments': pre_comments,
-            'post_comments': post_comments,
-            'is_new_ticket': is_new_ticket
+            "pre_ticket": pre_ticket,
+            "post_ticket": post_ticket,
+            "pre_comments": pre_comments,
+            "post_comments": post_comments,
+            "is_new_ticket": is_new_ticket,
         }
 
         for detector_class in self.get_detector_classes():
@@ -349,7 +348,7 @@ class ZengoService(object):
 
 def import_attribute(path):
     assert isinstance(path, str)
-    pkg, attr = path.rsplit('.', 1)
+    pkg, attr = path.rsplit(".", 1)
     ret = getattr(importlib.import_module(pkg), attr)
     return ret
 
@@ -368,11 +367,11 @@ class Detector(object):
     def __init__(self, context):
         self.context = context
         # we unpack some expected parts of context for easy referencing
-        self.pre_ticket = context.get('pre_ticket')
-        self.pre_comments = context.get('pre_comments')
-        self.post_ticket = context.get('post_ticket')
-        self.post_comments = context.get('post_comments')
-        self.is_new_ticket = context.get('is_new_ticket')
+        self.pre_ticket = context.get("pre_ticket")
+        self.pre_comments = context.get("pre_comments")
+        self.post_ticket = context.get("post_ticket")
+        self.post_comments = context.get("post_comments")
+        self.is_new_ticket = context.get("is_new_ticket")
 
     def detect(self):
         raise NotImplementedError()
@@ -384,7 +383,9 @@ class NewTicketDetector(Detector):
 
     def detect(self):
         if self.is_new_ticket:
-            self.signal.send(sender=Ticket, ticket=self.post_ticket, context=self.context)
+            self.signal.send(
+                sender=Ticket, ticket=self.post_ticket, context=self.context
+            )
 
 
 class NewCommentDetector(Detector):
@@ -396,10 +397,15 @@ class NewCommentDetector(Detector):
             new_comment_ids = set([c.zendesk_id for c in self.post_comments]) - set(
                 [c.zendesk_id for c in self.pre_comments]
             )
-            new_comments = [c for c in self.post_comments if c.zendesk_id in new_comment_ids]
+            new_comments = [
+                c for c in self.post_comments if c.zendesk_id in new_comment_ids
+            ]
             if new_comments:
                 self.signal.send(
-                    sender=Ticket, ticket=self.post_ticket, comments=new_comments, context=self.context
+                    sender=Ticket,
+                    ticket=self.post_ticket,
+                    comments=new_comments,
+                    context=self.context,
                 )
 
 
@@ -413,18 +419,23 @@ class CustomFieldsChangedDetector(Detector):
             and self.pre_ticket
             and self.pre_ticket.custom_fields != self.post_ticket.custom_fields
         ):
-            pre_values = {field['id']: field['value'] for field in self.pre_ticket.custom_fields}
+            pre_values = {
+                field["id"]: field["value"] for field in self.pre_ticket.custom_fields
+            }
             changes = []
             for field in self.post_ticket.custom_fields:
-                if pre_values[field['id']] != field['value']:
+                if pre_values[field["id"]] != field["value"]:
                     changes.append(
                         {
-                            'id': field['id'],
-                            'old': pre_values[field['id']],
-                            'new': field['value']
+                            "id": field["id"],
+                            "old": pre_values[field["id"]],
+                            "new": field["value"],
                         }
                     )
             if changes:
                 self.signal.send(
-                    sender=Ticket, ticket=self.post_ticket, changes=changes, context=self.context
+                    sender=Ticket,
+                    ticket=self.post_ticket,
+                    changes=changes,
+                    context=self.context,
                 )
