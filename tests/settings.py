@@ -6,10 +6,8 @@ USE_TZ = True
 TIME_ZONE = "UTC"
 DATABASES = {
     "default": {
-        "ENGINE": os.environ.get("TEST_DATABASE_ENGINE", "django.db.backends.sqlite3"),
+        "ENGINE": os.environ.get("TEST_DATABASE_ENGINE", "django.db.backends.postgresql"),
         "HOST": os.environ.get("TEST_DATABASE_HOST", "127.0.0.1"),
-        "NAME": os.environ.get("TEST_DATABASE_NAME", "konst"),
-        "USER": os.environ.get("TEST_DATABASE_USER", ""),
     }
 }
 MIDDLEWARE = []  # from 2.0 onwards, only MIDDLEWARE is used
