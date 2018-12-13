@@ -201,8 +201,13 @@ class ZengoService(object):
             yield
 
     def create_ticket(self, ticket):
-        # TODO: flesh this out
-        self.client.tickets.create(ticket)
+        """
+        Takes a Zenpy Ticket instance, creates it and then syncs the remote
+        ticket into our local database. If all goes well, returns a local Ticket
+        instance.
+        """
+        remote_zd_ticket = self.client.tickets.create(ticket)
+        return self.sync_ticket(remote_zd_ticket)
 
     def sync_ticket_id(self, ticket_id):
         return self.sync_ticket(self.client.tickets(id=ticket_id))
@@ -210,18 +215,24 @@ class ZengoService(object):
     def sync_ticket(self, remote_zd_ticket):
         """
         Given a remote Zendesk ticket, store its details, comments and associated users.
+
+        Additionally, we detect changes that have happened to the ticket comparing it
+        against the state we have on hand for it prior to the new sync.
         """
+
         # take a snapshot of the ticket and its comments in their old state
-        pre_ticket = Ticket.objects.filter(zendesk_id=remote_zd_ticket.id).first()
-        pre_comments = list(Comment.objects.filter(ticket=pre_ticket))
+        pre_sync_ticket = Ticket.objects.filter(zendesk_id=remote_zd_ticket.id).first()
+        pre_sync_comments = list(Comment.objects.filter(ticket=pre_sync_ticket))
+
         # sync the ticket and comments to establish the new state
         local_zd_user = self.update_or_create_local_zd_user_for_remote_zd_user(
             remote_zd_ticket.requester
         )
+
         local_ticket, created = Ticket.objects.update_or_create(
             zendesk_id=remote_zd_ticket.id,
             defaults=dict(
-                zendesk_user=local_zd_user,
+                requester=local_zd_user,
                 subject=remote_zd_ticket.subject,
                 description=remote_zd_ticket.description,
                 url=remote_zd_ticket.url,
@@ -237,67 +248,69 @@ class ZengoService(object):
         # as the first message is the ticket.description
         comments = self.sync_comments(remote_zd_ticket, local_ticket)
 
-        # it's possible the ticket isn't new but this is the first we're
-        # seeing of it, so only fire the new_ticket if there are no comments
-        is_new_ticket = created and not comments
-
-        if is_new_ticket:
-            signals.new_ticket.send(sender=Ticket, ticket=local_ticket)
-            print("New ticket!")
-
-        elif len(comments) > len(pre_comments):
-            new_comment_ids = set([c.zendesk_id for c in comments]) - set(
-                [c.zendesk_id for c in pre_comments]
-            )
-            new_comments = [c for c in comments if c.zendesk_id in new_comment_ids]
-            if new_comments:
-                print("New comments!")
-                signals.new_comments.send(
-                    sender=Ticket, ticket=local_ticket, comments=new_comments
-                )
-
-        if (
-            not is_new_ticket
-            and pre_ticket
-            and pre_ticket.custom_fields != local_ticket.custom_fields
-        ):
-            print(local_ticket.custom_fields)
-            print("Custom fields have changed!")
-
-        # # except tags will always have changed it custom fields have changed due
-        # # to how Zendesk has implemented this
-        # if not created and pre_ticket.tags != ticket.tags:
-        #     print("Tags have changed!")
+        # now detect changes made and fire signals that other apps can hook up
+        self.detect_changes(
+            pre_sync_ticket,
+            local_ticket,
+            pre_sync_comments,
+            comments,
+            # it's possible the ticket isn't new but this is the first we're
+            # seeing of it, so only consider it new if there are no comments
+            is_new_ticket=created and not comments,
+        )
 
         return local_ticket
 
-    def sync_comments(self, zd_ticket, ticket):
-        comments = []
+    def get_detector_classes(self):
+        return (NewTicketDetector, NewCommentDetector, CustomFieldsChangedDetector)
+
+    def detect_changes(
+        self, pre_ticket, post_ticket, pre_comments, post_comments,
+        is_new_ticket=False
+    ):
+        """
+        Take a mapping of detector instances and run them.
+
+        A detector is simply a class that contains knowledge of a certain type of change
+        to look for, along with a signal to fire when it finds the change.
+        """
+        change_context = {
+            'pre_ticket': pre_ticket,
+            'post_ticket': post_ticket,
+            'pre_comments': pre_comments,
+            'post_comments': post_comments,
+            'is_new_ticket': is_new_ticket
+        }
+
+        for detector_class in self.get_detector_classes():
+            detector_class(change_context).detect()
+
+    def sync_comments(self, zd_ticket, local_ticket):
+        local_comments = []
         # no need to sync the ticket requester as we'll have just done that
-        user_map = {zd_ticket.requester: ticket.zendesk_user}
-        for comment in self.client.tickets.comments(zd_ticket.id):
-            if comment.author not in user_map:
+        user_map = {zd_ticket.requester: local_ticket.requester}
+        for remote_comment in self.client.tickets.comments(zd_ticket.id):
+            if remote_comment.author not in user_map:
                 author = self.update_or_create_local_zd_user_for_remote_zd_user(
-                    comment.author
+                    remote_comment.author
                 )
-                user_map[comment.author] = author
+                user_map[remote_comment.author] = author
             else:
-                author = user_map[comment.author]
-            instance, created = Comment.objects.update_or_create(
-                zendesk_id=comment.id,
-                ticket=ticket,
+                author = user_map[remote_comment.author]
+            local_comment, created = Comment.objects.update_or_create(
+                zendesk_id=remote_comment.id,
+                ticket=local_ticket,
                 defaults=dict(
-                    # todo: avoid syncing same user over and over
                     author=author,
-                    body=comment.body,
-                    public=comment.public,
-                    created=comment.created_at,
+                    body=remote_comment.body,
+                    public=remote_comment.public,
+                    created=remote_comment.created_at,
                 ),
             )
-            comments.append(instance)
+            local_comments.append(local_comment)
         # sort increasing by created and id
-        comments.sort(key=lambda x: (x.created, x.id))
-        return comments
+        local_comments.sort(key=lambda c: (c.created, c.id))
+        return local_comments
 
     def store_event(self, data):
         """Take raw request body and parse then store an event."""
@@ -346,3 +359,72 @@ def get_service():
     if cls is None:
         return ZengoService()
     return import_attribute(cls)()
+
+
+class Detector(object):
+
+    signal = None
+
+    def __init__(self, context):
+        self.context = context
+        # we unpack some expected parts of context for easy referencing
+        self.pre_ticket = context.get('pre_ticket')
+        self.pre_comments = context.get('pre_comments')
+        self.post_ticket = context.get('post_ticket')
+        self.post_comments = context.get('post_comments')
+        self.is_new_ticket = context.get('is_new_ticket')
+
+    def detect(self):
+        raise NotImplementedError()
+
+
+class NewTicketDetector(Detector):
+
+    signal = signals.new_ticket
+
+    def detect(self):
+        if self.is_new_ticket:
+            self.signal.send(sender=Ticket, ticket=self.post_ticket, context=self.context)
+
+
+class NewCommentDetector(Detector):
+
+    signal = signals.new_comments
+
+    def detect(self):
+        if not self.is_new_ticket and len(self.post_comments) > len(self.pre_comments):
+            new_comment_ids = set([c.zendesk_id for c in self.post_comments]) - set(
+                [c.zendesk_id for c in self.pre_comments]
+            )
+            new_comments = [c for c in self.post_comments if c.zendesk_id in new_comment_ids]
+            if new_comments:
+                self.signal.send(
+                    sender=Ticket, ticket=self.post_ticket, comments=new_comments, context=self.context
+                )
+
+
+class CustomFieldsChangedDetector(Detector):
+
+    signal = signals.custom_fields_changed
+
+    def detect(self):
+        if (
+            not self.is_new_ticket
+            and self.pre_ticket
+            and self.pre_ticket.custom_fields != self.post_ticket.custom_fields
+        ):
+            pre_values = {field['id']: field['value'] for field in self.pre_ticket.custom_fields}
+            changes = []
+            for field in self.post_ticket.custom_fields:
+                if pre_values[field['id']] != field['value']:
+                    changes.append(
+                        {
+                            'id': field['id'],
+                            'old': pre_values[field['id']],
+                            'new': field['value']
+                        }
+                    )
+            if changes:
+                self.signal.send(
+                    sender=Ticket, ticket=self.post_ticket, changes=changes, context=self.context
+                )

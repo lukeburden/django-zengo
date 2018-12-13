@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -42,7 +45,7 @@ class Ticket(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
-    zendesk_user = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
+    requester = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     subject = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     url = models.URLField(null=True, blank=True)
