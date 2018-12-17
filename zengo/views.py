@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
+from django.utils.crypto import constant_time_compare
 from django.views.generic.base import View
 
 from .service import get_service
@@ -21,7 +22,9 @@ class WebhookView(View):
         secret_given = self.request.GET.get(self.secret_name) or self.request.POST.get(
             self.secret_name
         )
-        return secret_given is not None and secret_given == self.secret
+        return secret_given is not None and constant_time_compare(
+            secret_given, self.secret
+        )
 
     def post(self, request):
         if not self.validate_secret():
