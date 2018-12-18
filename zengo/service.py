@@ -86,12 +86,13 @@ class ZengoService(object):
             return result.next(), True
 
         # else check by associated emails
-        emails = local_user.emailaddress_set.all()
-        for e in emails:
-            result = self.client.search(type="user", email=e.email)
-            if result.count:
-                # match strength based on email verification state
-                return result.next(), e.verified
+        # TODO: move into handler, or make conditional on allauth available
+        # emails = local_user.emailaddress_set.all()
+        # for e in emails:
+        #     result = self.client.search(type="user", email=e.email)
+        #     if result.count:
+        #         # match strength based on email verification state
+        #         return result.next(), e.verified
 
         # finally try local_user.email value in case an EmailAddress entry does not exist
         if local_user.email:
@@ -124,6 +125,12 @@ class ZengoService(object):
             else:
                 raise
         return remote_zd_user
+
+    def get_or_create_remote_zd_user_for_local_user(self, local_user):
+        user, is_definite_match = self.get_remote_zd_user_for_local_user(local_user)
+        if user:
+            return user, is_definite_match
+        return self.create_remote_zd_user_for_local_user(local_user), True
 
     def update_remote_zd_user_for_local_user(self, local_user, remote_zd_user):
         """
@@ -200,14 +207,14 @@ class ZengoService(object):
         else:
             yield
 
-    def create_ticket(self, ticket):
-        """
-        Takes a Zenpy Ticket instance, creates it and then syncs the remote
-        ticket into our local database. If all goes well, returns a local Ticket
-        instance.
-        """
-        remote_zd_ticket = self.client.tickets.create(ticket)
-        return self.sync_ticket(remote_zd_ticket)
+    # def create_ticket_for_local_user(self, ticket):
+    #     """
+    #     Takes a Zenpy Ticket instance, creates it and then syncs the remote
+    #     ticket into our local database. If all goes well, returns a local Ticket
+    #     instance.
+    #     """
+    #     remote_zd_ticket = self.client.tickets.create(ticket)
+    #     return self.sync_ticket(remote_zd_ticket)
 
     def sync_ticket_id(self, ticket_id):
         return self.sync_ticket(self.client.tickets(id=ticket_id))
