@@ -339,13 +339,7 @@ class ZengoService(object):
         # we lock on the ticket ID, so we never double up on
         # processing
         with self.get_ticket_lock(ticket_id):
-            try:
-                self.sync_ticket_id(ticket_id)
-            except Exception:
-                import traceback
-
-                print(traceback.format_exc())
-                raise
+            self.sync_ticket_id(ticket_id)
 
     def get_updates(self, **kwargs):
         """

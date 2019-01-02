@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import logging
+import traceback
+
+from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -12,6 +16,9 @@ from django.views.generic.base import View
 
 from .service import get_service
 from .settings import app_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -37,5 +44,20 @@ class WebhookView(View):
             event = service.store_event(request.body)
         except ValidationError:
             return HttpResponseBadRequest()
-        service.process_event(event)
+        try:
+            with transaction.atomic():
+                # isolate any errors that happen with a transaction, such that
+                # we can perform further queries to store the error info
+                service.process_event(event)
+        except Exception:
+            logger.error(
+                "Failed to process event {}: \n{}".format(
+                    event.id,
+                    traceback.format_exc()
+                )
+            )
+            event.error = traceback.format_exc()
+            event.save(update_fields=('error',))
+            raise
+
         return HttpResponse()
