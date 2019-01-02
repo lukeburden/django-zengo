@@ -6,12 +6,15 @@ from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
 from django.utils.crypto import constant_time_compare
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
 from .service import get_service
 from .settings import app_settings
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class WebhookView(View):
     """Receive an update from Zendesk that a ticket has changed."""
 

@@ -36,7 +36,7 @@ class ZendeskUser(models.Model):
     user = models.ForeignKey(
         get_user_model(), null=True, blank=True, on_delete=models.PROTECT
     )
-    created = models.DateTimeField()
+    created_at = models.DateTimeField()
 
 
 class Ticket(models.Model):
@@ -61,8 +61,8 @@ class Ticket(models.Model):
     # custom fields and tags are stored here, relatively unprocessed
     custom_fields = JSONField(null=True, blank=True)
     tags = JSONField(null=True, blank=True)
-    created = models.DateTimeField()
-    updated = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(null=True, blank=True)
 
 
 class Comment(models.Model):
@@ -75,7 +75,7 @@ class Comment(models.Model):
     author = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
     public = models.BooleanField()
-    created = models.DateTimeField()
+    created_at = models.DateTimeField()
 
 
 class Event(models.Model):
@@ -84,7 +84,7 @@ class Event(models.Model):
 
     raw_data = models.TextField()
     json = JSONField(null=True, blank=True)
-    created = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
     processed = models.BooleanField(default=False)
     # if processing failed there was an error, it will appear here
     error = models.TextField(null=True, blank=True)

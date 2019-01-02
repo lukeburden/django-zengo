@@ -8,6 +8,7 @@ import json
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 
 from django_pglocks import advisory_lock
 
@@ -191,7 +192,7 @@ class ZengoService(object):
                 # attempt to resolve the local user if possible
                 user=self.get_local_user_for_external_id(remote_zd_user.external_id),
                 email=remote_zd_user.email,
-                created=remote_zd_user.created_at,
+                created_at=remote_zd_user.created_at,
                 name=remote_zd_user.name,
             ),
         )
@@ -246,8 +247,8 @@ class ZengoService(object):
                 status=Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
                 custom_fields=remote_zd_ticket.custom_fields,
                 tags=remote_zd_ticket.tags,
-                created=remote_zd_ticket.created_at,
-                updated=remote_zd_ticket.updated_at,
+                created_at=remote_zd_ticket.created_at,
+                updated_at=remote_zd_ticket.updated_at,
             ),
         )
 
@@ -255,41 +256,29 @@ class ZengoService(object):
         # as the first message is the ticket.description
         comments = self.sync_comments(remote_zd_ticket, local_ticket)
 
-        # now detect changes made and fire signals that other apps can hook up
-        self.detect_changes(
-            pre_sync_ticket,
-            local_ticket,
-            pre_sync_comments,
-            comments,
-            # it's possible the ticket isn't new but this is the first we're
-            # seeing of it, so only consider it new if there are no comments
-            is_new_ticket=created and not comments,
-        )
-
-        return local_ticket
-
-    def get_detector_classes(self):
-        return (NewTicketDetector, NewCommentDetector, CustomFieldsChangedDetector)
-
-    def detect_changes(
-        self, pre_ticket, post_ticket, pre_comments, post_comments, is_new_ticket=False
-    ):
-        """
-        Take a mapping of detector instances and run them.
-
-        A detector is simply a class that contains knowledge of a certain type of change
-        to look for, along with a signal to fire when it finds the change.
-        """
-        change_context = {
-            "pre_ticket": pre_ticket,
-            "post_ticket": post_ticket,
-            "pre_comments": pre_comments,
-            "post_comments": post_comments,
-            "is_new_ticket": is_new_ticket,
+        update_context = {
+            "pre_ticket": pre_sync_ticket,
+            "post_ticket": local_ticket,
+            "pre_comments": pre_sync_comments,
+            "post_comments": comments,
         }
 
-        for detector_class in self.get_detector_classes():
-            detector_class(change_context).detect()
+        if created and not comments:
+            # it's possible the ticket isn't new but this is the first we're
+            # seeing of it, so only consider it new if there are no comments
+            signals.ticket_created.send(
+                sender=Ticket, ticket=local_ticket, context=update_context
+            )
+
+        else:
+            signals.ticket_updated.send(
+                sender=Ticket,
+                ticket=local_ticket,
+                updates=self.get_updates(**update_context),
+                context=update_context,
+            )
+
+        return local_ticket
 
     def sync_comments(self, zd_ticket, local_ticket):
         local_comments = []
@@ -310,12 +299,12 @@ class ZengoService(object):
                     author=author,
                     body=remote_comment.body,
                     public=remote_comment.public,
-                    created=remote_comment.created_at,
+                    created_at=remote_comment.created_at,
                 ),
             )
             local_comments.append(local_comment)
         # sort increasing by created and id
-        local_comments.sort(key=lambda c: (c.created, c.id))
+        local_comments.sort(key=lambda c: (c.created_at, c.id))
         return local_comments
 
     def store_event(self, data):
@@ -350,7 +339,54 @@ class ZengoService(object):
         # we lock on the ticket ID, so we never double up on
         # processing
         with self.get_ticket_lock(ticket_id):
-            self.sync_ticket_id(ticket_id)
+            try:
+                self.sync_ticket_id(ticket_id)
+            except Exception:
+                import traceback
+
+                print(traceback.format_exc())
+                raise
+
+    def get_updates(self, **kwargs):
+        """
+        Get new comments and updated fields and custom fields.
+
+        Further update detection can be done by projects using the
+        `ticket_updated` signal in combination with the passed `change_context`.
+        """
+        return {
+            "new_comments": self.get_new_comments(**kwargs),
+            "updated_fields": self.get_updated_fields(**kwargs),
+        }
+
+    def get_new_comments(self, pre_ticket, post_ticket, pre_comments, post_comments):
+        new_comments = []
+        if len(post_comments) > len(pre_comments):
+            new_comment_ids = set([c.zendesk_id for c in post_comments]) - set(
+                [c.zendesk_id for c in pre_comments]
+            )
+            new_comments = [c for c in post_comments if c.zendesk_id in new_comment_ids]
+        return new_comments
+
+    def get_updated_fields(self, pre_ticket, post_ticket, pre_comments, post_comments):
+        updates = {}
+
+        if not (pre_ticket and post_ticket):
+            return updates
+
+        pre_fields = model_to_dict(pre_ticket)
+        post_fields = model_to_dict(post_ticket)
+
+        # note: we do this using comparison rather than set operations to
+        # avoid issues with more complex, non-hashable fields
+        for k in pre_fields.keys():
+            if k in ("created_at", "updated_at"):
+                # don't bother detecting changes in these, it's not useful
+                # and timestamps are often mismatched as datetimes and strings
+                continue
+            if pre_fields.get(k) != post_fields.get(k):
+                updates[k] = {"old": pre_fields.get(k), "new": post_fields.get(k)}
+        return updates
 
 
 def import_attribute(path):
@@ -365,84 +401,3 @@ def get_service():
     if cls is None:
         return ZengoService()
     return import_attribute(cls)()
-
-
-class Detector(object):
-
-    signal = None
-
-    def __init__(self, context):
-        self.context = context
-        # we unpack some expected parts of context for easy referencing
-        self.pre_ticket = context.get("pre_ticket")
-        self.pre_comments = context.get("pre_comments")
-        self.post_ticket = context.get("post_ticket")
-        self.post_comments = context.get("post_comments")
-        self.is_new_ticket = context.get("is_new_ticket")
-
-    def detect(self):
-        raise NotImplementedError()
-
-
-class NewTicketDetector(Detector):
-
-    signal = signals.new_ticket
-
-    def detect(self):
-        if self.is_new_ticket:
-            self.signal.send(
-                sender=Ticket, ticket=self.post_ticket, context=self.context
-            )
-
-
-class NewCommentDetector(Detector):
-
-    signal = signals.new_comments
-
-    def detect(self):
-        if not self.is_new_ticket and len(self.post_comments) > len(self.pre_comments):
-            new_comment_ids = set([c.zendesk_id for c in self.post_comments]) - set(
-                [c.zendesk_id for c in self.pre_comments]
-            )
-            new_comments = [
-                c for c in self.post_comments if c.zendesk_id in new_comment_ids
-            ]
-            if new_comments:
-                self.signal.send(
-                    sender=Ticket,
-                    ticket=self.post_ticket,
-                    comments=new_comments,
-                    context=self.context,
-                )
-
-
-class CustomFieldsChangedDetector(Detector):
-
-    signal = signals.custom_fields_changed
-
-    def detect(self):
-        if (
-            not self.is_new_ticket
-            and self.pre_ticket
-            and self.pre_ticket.custom_fields != self.post_ticket.custom_fields
-        ):
-            pre_values = {
-                field["id"]: field["value"] for field in self.pre_ticket.custom_fields
-            }
-            changes = []
-            for field in self.post_ticket.custom_fields:
-                if pre_values[field["id"]] != field["value"]:
-                    changes.append(
-                        {
-                            "id": field["id"],
-                            "old": pre_values[field["id"]],
-                            "new": field["value"],
-                        }
-                    )
-            if changes:
-                self.signal.send(
-                    sender=Ticket,
-                    ticket=self.post_ticket,
-                    changes=changes,
-                    context=self.context,
-                )
