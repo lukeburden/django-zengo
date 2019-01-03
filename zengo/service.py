@@ -4,13 +4,14 @@ from __future__ import unicode_literals
 import contextlib
 import importlib
 import json
+import logging
+import traceback
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.models import model_to_dict
-
-from django_pglocks import advisory_lock
 
 from zenpy import Zenpy
 from zenpy.lib.api_objects import User as RemoteZendeskUser
@@ -22,6 +23,9 @@ from .models import Event
 from .models import Ticket
 from .models import ZendeskUser as LocalZendeskUser
 from .settings import app_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_zenpy_client():
@@ -198,16 +202,6 @@ class ZengoService(object):
         )
         return instance
 
-    @contextlib.contextmanager
-    def get_ticket_lock(self, ticket_id):
-        # detect both postgres and postgis, upon which we serialize ticket
-        # updates using a database lock
-        if "postg" in settings.DATABASES["default"]["ENGINE"]:
-            with advisory_lock("zengo-ticket-{}".format(ticket_id)):
-                yield
-        else:
-            yield
-
     # def create_ticket_for_local_user(self, ticket):
     #     """
     #     Takes a Zenpy Ticket instance, creates it and then syncs the remote
@@ -223,15 +217,7 @@ class ZengoService(object):
     def sync_ticket(self, remote_zd_ticket):
         """
         Given a remote Zendesk ticket, store its details, comments and associated users.
-
-        Additionally, we detect changes that have happened to the ticket comparing it
-        against the state we have on hand for it prior to the new sync.
         """
-
-        # take a snapshot of the ticket and its comments in their old state
-        pre_sync_ticket = Ticket.objects.filter(zendesk_id=remote_zd_ticket.id).first()
-        pre_sync_comments = list(Comment.objects.filter(ticket=pre_sync_ticket))
-
         # sync the ticket and comments to establish the new state
         local_zd_user = self.update_or_create_local_zd_user_for_remote_zd_user(
             remote_zd_ticket.requester
@@ -254,31 +240,9 @@ class ZengoService(object):
 
         # sync comments that exist - for a new ticket, there may be none
         # as the first message is the ticket.description
-        comments = self.sync_comments(remote_zd_ticket, local_ticket)
+        self.sync_comments(remote_zd_ticket, local_ticket)
 
-        update_context = {
-            "pre_ticket": pre_sync_ticket,
-            "post_ticket": local_ticket,
-            "pre_comments": pre_sync_comments,
-            "post_comments": comments,
-        }
-
-        if created and not comments:
-            # it's possible the ticket isn't new but this is the first we're
-            # seeing of it, so only consider it new if there are no comments
-            signals.ticket_created.send(
-                sender=Ticket, ticket=local_ticket, context=update_context
-            )
-
-        else:
-            signals.ticket_updated.send(
-                sender=Ticket,
-                ticket=local_ticket,
-                updates=self.get_updates(**update_context),
-                context=update_context,
-            )
-
-        return local_ticket
+        return local_ticket, created
 
     def sync_comments(self, zd_ticket, local_ticket):
         local_comments = []
@@ -307,6 +271,15 @@ class ZengoService(object):
         local_comments.sort(key=lambda c: (c.created_at, c.id))
         return local_comments
 
+
+class ZengoProcessor(object):
+    """
+    Store and process updates from Zendesk.
+
+    Subclass this processor to serialize ticket processing, process
+    asynchronously, etc.
+    """
+
     def store_event(self, data):
         """Take raw request body and parse then store an event."""
         event = Event.objects.create(raw_data=data)
@@ -315,10 +288,38 @@ class ZengoService(object):
             data = json.loads(data)
         except (TypeError, ValueError) as e:
             raise ValidationError(e.message)
-        else:
-            event.json = data
-            event.save(update_fields=("json",))
+
+        # minimum we need to be able to process the update is
+        # a remote ZD ticket ID
+        try:
+            int(data["id"])
+        except KeyError:
+            raise ValidationError("`id` not found in data")
+        except ValueError:
+            raise ValidationError("`id` not found in data")
+
+        event.json = data
+        event.save(update_fields=("json",))
         return event
+
+    def begin_processing_event(self, event):
+        return self.process_event_and_record_errors(event)
+
+    def process_event_and_record_errors(self, event):
+        try:
+            # isolate any processing errors using a transaction, such that
+            # we can perform further queries to store the error info
+            with transaction.atomic():
+                self.process_event(event)
+        except Exception:
+            logger.error(
+                "Failed to process event {}: \n{}".format(
+                    event.id, traceback.format_exc()
+                )
+            )
+            event.error = traceback.format_exc()
+            event.save(update_fields=("error",))
+            raise
 
     def process_event(self, event):
         """
@@ -328,18 +329,39 @@ class ZengoService(object):
             "id": "{{ ticket.id }}"
         }
         """
-        # minimum we need to get sync'ing is a ZD ticket ID
-        try:
-            ticket_id = int(event.json["id"])
-        except KeyError:
-            raise ValidationError("`id` not found in data")
-        except ValueError:
-            raise ValidationError("`id` not found in data")
+        ticket_id = int(event.json["id"])
 
-        # we lock on the ticket ID, so we never double up on
-        # processing
-        with self.get_ticket_lock(ticket_id):
-            self.sync_ticket_id(ticket_id)
+        # take a snapshot of the ticket and its comments in their old state
+        pre_sync_ticket = Ticket.objects.filter(zendesk_id=ticket_id).first()
+        pre_sync_comments = []
+        if pre_sync_ticket:
+            pre_sync_comments = list(pre_sync_ticket.comments.all())
+
+        with self.acquire_ticket_lock(ticket_id):
+            post_sync_ticket, created = get_service().sync_ticket_id(ticket_id)
+
+        post_sync_comments = list(post_sync_ticket.comments.all())
+
+        # build update context for passing downstream
+        update_context = {
+            "pre_ticket": pre_sync_ticket,
+            "post_ticket": post_sync_ticket,
+            "pre_comments": pre_sync_comments,
+            "post_comments": post_sync_comments,
+        }
+
+        if created and not post_sync_comments:
+            signals.ticket_created.send(
+                sender=Ticket, ticket=post_sync_ticket, context=update_context
+            )
+
+        else:
+            signals.ticket_updated.send(
+                sender=Ticket,
+                ticket=post_sync_ticket,
+                updates=self.get_updates(**update_context),
+                context=update_context,
+            )
 
     def get_updates(self, **kwargs):
         """
@@ -382,12 +404,24 @@ class ZengoService(object):
                 updates[k] = {"old": pre_fields.get(k), "new": post_fields.get(k)}
         return updates
 
+    @contextlib.contextmanager
+    def acquire_ticket_lock(self, ticket_id):
+        # subclass to serialize ticket updates
+        yield
+
 
 def import_attribute(path):
     assert isinstance(path, str)
     pkg, attr = path.rsplit(".", 1)
     ret = getattr(importlib.import_module(pkg), attr)
     return ret
+
+
+def get_processor():
+    cls = app_settings.PROCESSOR_CLASS
+    if cls is None:
+        return ZengoProcessor()
+    return import_attribute(cls)()
 
 
 def get_service():

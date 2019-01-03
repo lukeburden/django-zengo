@@ -71,7 +71,9 @@ class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
-    ticket = models.ForeignKey(Ticket, related_name="tickets", on_delete=models.CASCADE)
+    ticket = models.ForeignKey(
+        Ticket, related_name="comments", on_delete=models.CASCADE
+    )
     author = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
     public = models.BooleanField()

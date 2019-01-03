@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from django.conf import settings
 
 
-DEFAULTS = {"SERVICE_CLASS": None, "WEBHOOK_SECRET": None}
+DEFAULTS = {"SERVICE_CLASS": None, "WEBHOOK_SECRET": None, "PROCESSOR_CLASS": None}
 
 
 class AppSettings(object):
