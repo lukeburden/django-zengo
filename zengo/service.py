@@ -310,7 +310,10 @@ class ZengoProcessor(object):
             # isolate any processing errors using a transaction, such that
             # we can perform further queries to store the error info
             with transaction.atomic():
-                self.process_event(event)
+                # potentially serialize processing per-ticket
+                with self.acquire_ticket_lock(int(event.json["id"])):
+                    self.process_event(event)
+
         except Exception:
             logger.error(
                 "Failed to process event {}: \n{}".format(
@@ -337,8 +340,7 @@ class ZengoProcessor(object):
         if pre_sync_ticket:
             pre_sync_comments = list(pre_sync_ticket.comments.all())
 
-        with self.acquire_ticket_lock(ticket_id):
-            post_sync_ticket, created = get_service().sync_ticket_id(ticket_id)
+        post_sync_ticket, created = get_service().sync_ticket_id(ticket_id)
 
         post_sync_comments = list(post_sync_ticket.comments.all())
 
