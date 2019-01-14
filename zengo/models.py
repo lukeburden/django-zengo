@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from django.conf import settings
+import json
+
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
-
-# detect both postgres and postgis, upon which we use their native
-# JSONField
-if "postg" in settings.DATABASES["default"]["ENGINE"]:
-    from django.contrib.postgres.fields import JSONField
-else:
-    from jsonfield import JSONField
 
 
 class ZendeskUser(models.Model):
@@ -84,16 +79,24 @@ class Event(models.Model):
     class Meta:
         app_label = "zengo"
 
-    raw_data = models.TextField()
-    json = JSONField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    processed = models.BooleanField(default=False)
-    # if processing failed there was an error, it will appear here
+    # limit the length to limit abuse
+    raw_data = models.TextField(max_length=1024)
+
+    # the remote ticket ID extracted from the data
+    remote_ticket_id = models.PositiveIntegerField(null=True, blank=True)
+
+    # if processing failed, an error will appear here
     error = models.TextField(null=True, blank=True)
-    # these should be populated if it was processed OK
+
+    # if processing succeeded, this will point at a local Ticket instance
+    # with comments etc
     ticket = models.ForeignKey(
         Ticket, null=True, blank=True, related_name="events", on_delete=models.SET_NULL
     )
-    actor = models.ForeignKey(
-        ZendeskUser, null=True, blank=True, on_delete=models.SET_NULL
-    )
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def json(self):
+        return json.loads(self.raw_data)

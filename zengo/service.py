@@ -18,6 +18,7 @@ from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
 
 from . import signals
+from . import strings
 from .models import Comment
 from .models import Event
 from .models import Ticket
@@ -286,20 +287,20 @@ class ZengoProcessor(object):
         event.save()
         try:
             data = json.loads(data)
-        except (TypeError, ValueError) as e:
-            raise ValidationError(e.message)
+        except (TypeError, ValueError):
+            raise ValidationError(strings.data_malformed)
 
         # minimum we need to be able to process the update is
         # a remote ZD ticket ID
         try:
             int(data["id"])
         except KeyError:
-            raise ValidationError("`id` not found in data")
+            raise ValidationError(strings.data_no_ticket_id)
         except ValueError:
-            raise ValidationError("`id` not found in data")
+            raise ValidationError(strings.data_no_ticket_id)
 
-        event.json = data
-        event.save(update_fields=("json",))
+        event.remote_ticket_id = data["id"]
+        event.save(update_fields=("remote_ticket_id",))
         return event
 
     def begin_processing_event(self, event):
@@ -311,7 +312,7 @@ class ZengoProcessor(object):
             # we can perform further queries to store the error info
             with transaction.atomic():
                 # potentially serialize processing per-ticket
-                with self.acquire_ticket_lock(int(event.json["id"])):
+                with self.acquire_ticket_lock(event.remote_ticket_id):
                     self.process_event(event)
 
         except Exception:
@@ -332,7 +333,7 @@ class ZengoProcessor(object):
             "id": "{{ ticket.id }}"
         }
         """
-        ticket_id = int(event.json["id"])
+        ticket_id = event.remote_ticket_id
 
         # take a snapshot of the ticket and its comments in their old state
         pre_sync_ticket = Ticket.objects.filter(zendesk_id=ticket_id).first()

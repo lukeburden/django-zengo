@@ -1,15 +1,9 @@
 import os
 
-
 DEBUG = True
 USE_TZ = True
 TIME_ZONE = "UTC"
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("TEST_DATABASE_ENGINE", "django.db.backends.postgresql"),
-        "HOST": os.environ.get("TEST_DATABASE_HOST", "127.0.0.1"),
-    }
-}
+
 MIDDLEWARE = []  # from 2.0 onwards, only MIDDLEWARE is used
 
 ROOT_URLCONF = "tests.urls"
@@ -20,6 +14,14 @@ INSTALLED_APPS = [
     "tests",
 ]
 SITE_ID = 1
+
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("TEST_DATABASE_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("TEST_DATABASE_NAME", "zengo"),
+        "HOST": os.environ.get("TEST_DATABASE_HOST", "localhost"),
+    }
+}
 
 TEMPLATES = [
     {
@@ -41,3 +43,8 @@ TEMPLATES = [
     }
 ]
 SECRET_KEY = "zengo-secret-key"
+
+# all tests should have Zendesk mocked out
+ZENDESK_EMAIL = "iamaemail@example.com"
+ZENDESK_TOKEN = "123123123123123123123"
+ZENDESK_SUBDOMAIN = "example.zendesk.com"
