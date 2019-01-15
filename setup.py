@@ -25,6 +25,7 @@ Integrate Zendesk and your Django app
 Zengo facilitates receiving webhook updates from Zendesk and detecting new tickets and comments on existing tickets
 whilst maintaining a local cache of Zendesk ticket, comment and user data.
 """
+
 install_requires = [
     "django>=1.11,<3",
     "zenpy>=2,<3",
@@ -32,7 +33,12 @@ install_requires = [
     "psycopg2-binary>=2,<3",
 ]
 
-tests_require = install_requires + ["pytest", "pytest-django", "pytest-mock"]
+tests_require = [
+    "pytest>=4,<5",
+    "pytest-django>=3,<4",
+    "pytest-mock>=1,<2",
+    "model_mommy>=1,<2"
+]
 
 setup(
     name=NAME,

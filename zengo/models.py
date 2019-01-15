@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import json
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -54,8 +53,8 @@ class Ticket(models.Model):
     )
     status = ConstantChoiceCharField(constants=states, max_length=8)
     # custom fields and tags are stored here, relatively unprocessed
-    custom_fields = JSONField(null=True, blank=True)
-    tags = JSONField(null=True, blank=True)
+    custom_fields = models.TextField(null=True, blank=True)
+    tags = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(null=True, blank=True)
 

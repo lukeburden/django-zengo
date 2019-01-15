@@ -47,4 +47,4 @@ SECRET_KEY = "zengo-secret-key"
 # all tests should have Zendesk mocked out
 ZENDESK_EMAIL = "iamaemail@example.com"
 ZENDESK_TOKEN = "123123123123123123123"
-ZENDESK_SUBDOMAIN = "example.zendesk.com"
+ZENDESK_SUBDOMAIN = "example"
