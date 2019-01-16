@@ -29,15 +29,6 @@ from .settings import app_settings
 logger = logging.getLogger(__name__)
 
 
-def get_zenpy_client():
-    creds = {
-        "email": settings.ZENDESK_EMAIL,
-        "token": settings.ZENDESK_TOKEN,
-        "subdomain": settings.ZENDESK_SUBDOMAIN,
-    }
-    return Zenpy(**creds)
-
-
 """
 ~ Caution ~
 
@@ -61,7 +52,12 @@ class ZengoService(object):
     """Encapsulate behaviour allowing easy customisation."""
 
     def __init__(self, *args, **kwargs):
-        self.client = get_zenpy_client()
+        creds = {
+            "email": settings.ZENDESK_EMAIL,
+            "token": settings.ZENDESK_TOKEN,
+            "subdomain": settings.ZENDESK_SUBDOMAIN,
+        }
+        self.client = Zenpy(**creds)
 
     # extraction of data from local users for injection into Zendesk
 
@@ -100,18 +96,17 @@ class ZengoService(object):
         #         # match strength based on email verification state
         #         return result.next(), e.verified
 
-        # finally try local_user.email value in case an EmailAddress entry does not exist
+        # check for a weak match match using the email field on user instance
         if local_user.email:
             result = self.client.search(type="user", email=local_user.email)
             if result.count:
-                # weak match match by external_id
                 return result.next(), False
 
         # no match at all, buh-bow
         return None, False
 
     def create_remote_zd_user_for_local_user(self, local_user):
-        # create a remote zendesk user based on the given local user's details
+        """Create a remote zendesk user based on the given local user's details."""
         try:
             remote_zd_user = self.client.users.create(
                 RemoteZendeskUser(
@@ -136,6 +131,7 @@ class ZengoService(object):
         user, is_definite_match = self.get_remote_zd_user_for_local_user(local_user)
         if user:
             return user, is_definite_match
+        # we create a remote user in Zendesk for this local user
         return self.create_remote_zd_user_for_local_user(local_user), True
 
     def update_remote_zd_user_for_local_user(self, local_user, remote_zd_user):

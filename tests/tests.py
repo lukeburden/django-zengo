@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from copy import copy
+
 from django.core.exceptions import ValidationError
+
+try:
+    from django.urls import reverse
+except ImportError:
+    # fall back to < 2
+    from django.core.urlresolvers import reverse
 
 from model_mommy import mommy
 
@@ -11,13 +19,9 @@ import responses
 
 from zengo import service
 from zengo import strings
-from zengo.models import Ticket
+from zengo.models import Event, Ticket
 
 from . import api_responses
-
-
-def test_get_zenpy_client():
-    assert service.get_zenpy_client() is not None
 
 
 # test processor methods
@@ -187,52 +191,129 @@ def test_processor_process_event_ticket_updated(mocker):
     )
 
 
-# def get_updates(self, **kwargs):
-#     """
-#     Get new comments and updated fields and custom fields.
+@pytest.mark.django_db
+def test_processor_get_new_comments_new_ticket(mocker):
+    processor = service.ZengoProcessor()
+    ticket = mommy.make("zengo.Ticket", zendesk_id=123, requester__zendesk_id=1)
 
-#     Further update detection can be done by projects using the
-#     `ticket_updated` signal in combination with the passed `change_context`.
-#     """
-#     return {
-#         "new_comments": self.get_new_comments(**kwargs),
-#         "updated_fields": self.get_updated_fields(**kwargs),
-#     }
+    update_context = {
+        "pre_ticket": None,
+        "post_ticket": ticket,
+        "pre_comments": [],
+        "post_comments": [],
+    }
 
-# def get_new_comments(self, pre_ticket, post_ticket, pre_comments, post_comments):
-#     new_comments = []
-#     if len(post_comments) > len(pre_comments):
-#         new_comment_ids = set([c.zendesk_id for c in post_comments]) - set(
-#             [c.zendesk_id for c in pre_comments]
-#         )
-#         new_comments = [c for c in post_comments if c.zendesk_id in new_comment_ids]
-#     return new_comments
+    assert processor.get_new_comments(**update_context) == []
 
-# def get_updated_fields(self, pre_ticket, post_ticket, pre_comments, post_comments):
-#     updates = {}
 
-#     if not (pre_ticket and post_ticket):
-#         return updates
+@pytest.mark.django_db
+def test_processor_get_new_comments_new_ticket_plus_comment(mocker):
+    processor = service.ZengoProcessor()
+    ticket = mommy.make("zengo.Ticket", zendesk_id=123, requester__zendesk_id=1)
+    comment = mommy.make("zengo.Comment", ticket=ticket)
+    update_context = {
+        "pre_ticket": None,
+        "post_ticket": ticket,
+        "pre_comments": [],
+        "post_comments": [comment],
+    }
+    assert processor.get_new_comments(**update_context) == [comment]
 
-#     pre_fields = model_to_dict(pre_ticket)
-#     post_fields = model_to_dict(post_ticket)
 
-#     # note: we do this using comparison rather than set operations to
-#     # avoid issues with more complex, non-hashable fields
-#     for k in pre_fields.keys():
-#         if k in ("created_at", "updated_at"):
-#             # don't bother detecting changes in these, it's not useful
-#             # and timestamps are often mismatched as datetimes and strings
-#             continue
-#         if pre_fields.get(k) != post_fields.get(k):
-#             updates[k] = {"old": pre_fields.get(k), "new": post_fields.get(k)}
-#     return updates
+@pytest.mark.django_db
+def test_processor_get_new_comments_existing_ticket_plus_comment(mocker):
+    processor = service.ZengoProcessor()
+    ticket = mommy.make("zengo.Ticket", zendesk_id=123, requester__zendesk_id=1)
+    comment = mommy.make("zengo.Comment", ticket=ticket)
+    another_comment = mommy.make("zengo.Comment", ticket=ticket)
+    update_context = {
+        "pre_ticket": ticket,
+        "post_ticket": ticket,
+        "pre_comments": [comment],
+        "post_comments": [comment, another_comment],
+    }
+    assert processor.get_new_comments(**update_context) == [another_comment]
+
+
+@pytest.mark.django_db
+def test_processor_get_updated_fields_no_changes(mocker):
+    processor = service.ZengoProcessor()
+    ticket = mommy.make("zengo.Ticket")
+    update_context = {
+        "pre_ticket": ticket,
+        "post_ticket": ticket,
+        "pre_comments": [],
+        "post_comments": [],
+    }
+    assert processor.get_updated_fields(**update_context) == {}
+
+
+@pytest.mark.django_db
+def test_processor_get_updated_fields_several_fields_changed(mocker):
+    processor = service.ZengoProcessor()
+    ticket = mommy.make(
+        "zengo.Ticket",
+        zendesk_id=123,
+        requester__zendesk_id=1,
+        custom_fields="some json text",
+        status=Ticket.states.open,
+    )
+    post_ticket = copy(ticket)
+    post_ticket.custom_fields = "different json text"
+    post_ticket.status = Ticket.states.pending
+    update_context = {
+        "pre_ticket": ticket,
+        "post_ticket": post_ticket,
+        "pre_comments": [],
+        "post_comments": [],
+    }
+    assert processor.get_updated_fields(**update_context) == {
+        "custom_fields": {"new": "different json text", "old": "some json text"},
+        "status": {"new": Ticket.states.pending, "old": Ticket.states.open},
+    }
 
 
 # test service methods
 
 
 # test WebhookView
+
+
+@pytest.mark.django_db
+def test_webhook_view_missing_secret():
+    pass
+
+
+@pytest.mark.django_db
+def test_webhook_view_invalid_secret():
+    pass
+
+
+@pytest.mark.django_db
+def test_webhook_view_no_body():
+    pass
+
+
+@pytest.mark.django_db
+def test_webhook_view_invalid_body():
+    pass
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_webhook_view_ok(client):
+    assert Event.objects.count() == 0
+    assert Ticket.objects.count() == 0
+    add_api_responses_no_comment()
+    response = client.post(
+        reverse("webhook_view") + "?secret=zoomzoom", data={"id": 123}
+    )
+    # we should be being redirected to our post-login redirect URL
+    print(response.content)
+    assert response.status_code == 200
+    assert Event.objects.count() == 1
+    assert Ticket.objects.count() == 1
+
 
 # Event
 # - receipt

@@ -48,3 +48,5 @@ SECRET_KEY = "zengo-secret-key"
 ZENDESK_EMAIL = "iamaemail@example.com"
 ZENDESK_TOKEN = "123123123123123123123"
 ZENDESK_SUBDOMAIN = "example"
+
+ZENGO_WEBHOOK_SECRET = "zoomzoom"
