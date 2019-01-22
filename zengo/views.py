@@ -35,7 +35,7 @@ class WebhookView(View):
         processor = get_processor()
         try:
             event = processor.store_event(request.body)
-        except ValidationError:
-            return HttpResponseBadRequest()
+        except ValidationError as ve:
+            return HttpResponseBadRequest(ve.message)
         processor.begin_processing_event(event)
         return HttpResponse()

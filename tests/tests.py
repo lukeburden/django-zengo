@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
 from copy import copy
 
 from django.core.exceptions import ValidationError
@@ -306,10 +307,11 @@ def test_webhook_view_ok(client):
     assert Ticket.objects.count() == 0
     add_api_responses_no_comment()
     response = client.post(
-        reverse("webhook_view") + "?secret=zoomzoom", data={"id": 123}
+        reverse("webhook_view") + "?secret=zoomzoom", data=json.dumps(
+            {"id": 123}
+        ),
+        content_type="application/json"
     )
-    # we should be being redirected to our post-login redirect URL
-    print(response.content)
     assert response.status_code == 200
     assert Event.objects.count() == 1
     assert Ticket.objects.count() == 1

@@ -20,22 +20,37 @@ class ZendeskUser(models.Model):
     can be null.
     """
 
-    class Meta:
-        app_label = "zengo"
+    roles = Constants(
+        Constant(end_user="end-user"), Constant(agent="agent"), Constant(admin="admin")
+    )
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
+
     name = models.TextField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
+    active = models.BooleanField(default=True)
+    # we store all of the photo details from the API as JSON encoded text
+    photos_json = models.TextField(null=True, blank=True)
+
+    role = ConstantChoiceCharField(constants=roles, max_length=8)
+
+    created_at = models.DateTimeField()
+
+    # an optional reference to a local user instance
     user = models.ForeignKey(
         get_user_model(), null=True, blank=True, on_delete=models.PROTECT
     )
-    created_at = models.DateTimeField()
+
+    class Meta:
+        app_label = "zengo"
+
+    def photo_url(self):
+        if self.photos_json:
+            return json.loads(self.photos_json)["content_url"]
 
 
 class Ticket(models.Model):
-    class Meta:
-        app_label = "zengo"
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
@@ -52,16 +67,18 @@ class Ticket(models.Model):
         Constant(closed="closed"),
     )
     status = ConstantChoiceCharField(constants=states, max_length=8)
-    # custom fields and tags are stored here, relatively unprocessed
+    # custom fields and tags are stored here, relatively unprocessed and
+    # are None, or parseable JSON
     custom_fields = models.TextField(null=True, blank=True)
     tags = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(null=True, blank=True)
 
-
-class Comment(models.Model):
     class Meta:
         app_label = "zengo"
+
+
+class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     zendesk_id = models.BigIntegerField(unique=True)
@@ -73,10 +90,14 @@ class Comment(models.Model):
     public = models.BooleanField()
     created_at = models.DateTimeField()
 
-
-class Event(models.Model):
     class Meta:
         app_label = "zengo"
+
+
+class Event(models.Model):
+    """
+    Persist details around a single occurrence of Zendesk hitting the webhook view.
+    """
 
     # limit the length to limit abuse
     raw_data = models.TextField(max_length=1024)
@@ -95,6 +116,9 @@ class Event(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "zengo"
 
     @property
     def json(self):

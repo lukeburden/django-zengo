@@ -103,7 +103,32 @@ requester = json.loads(
     "iana_time_zone": "America/Phoenix",
     "phone": null,
     "shared_phone_number": null,
-    "photo": null,
+    "photo": {
+      "url": "https://example.zendesk.com/api/v2/attachments/360058277492.json",
+      "id": 360058277492,
+      "file_name": "IMG_5033.JPG",
+      "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+      "mapped_content_url":"https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+      "content_type":"image/jpeg",
+      "size":5999,
+      "width":80,
+      "height":68,
+      "inline":false,
+      "thumbnails": [
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/360058277512.json",
+          "id": 360058277512,
+          "file_name": "IMG_5033_thumb.JPG",
+          "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+          "mapped_content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+          "content_type": "image/jpeg",
+          "size": 1449,
+          "width": 32,
+          "height": 27,
+          "inline": false
+        }
+      ]
+    },
     "locale_id": 1,
     "locale": "en-US",
     "organization_id": null,
@@ -149,7 +174,32 @@ submitter = json.loads(
     "iana_time_zone": "America/Phoenix",
     "phone": null,
     "shared_phone_number": null,
-    "photo": null,
+    "photo": {
+      "url": "https://example.zendesk.com/api/v2/attachments/360058277492.json",
+      "id": 360058277492,
+      "file_name": "IMG_5033.JPG",
+      "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+      "mapped_content_url":"https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+      "content_type":"image/jpeg",
+      "size":5999,
+      "width":80,
+      "height":68,
+      "inline":false,
+      "thumbnails": [
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/360058277512.json",
+          "id": 360058277512,
+          "file_name": "IMG_5033_thumb.JPG",
+          "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+          "mapped_content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+          "content_type": "image/jpeg",
+          "size": 1449,
+          "width": 32,
+          "height": 27,
+          "inline": false
+        }
+      ]
+    },
     "locale_id": 1,
     "locale": "en-US",
     "organization_id": null,

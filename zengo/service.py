@@ -195,6 +195,10 @@ class ZengoService(object):
                 email=remote_zd_user.email,
                 created_at=remote_zd_user.created_at,
                 name=remote_zd_user.name,
+                active=remote_zd_user.active,
+                role=remote_zd_user.role,
+                # store their latest photo JSON data
+                photos_json=json.dumps(remote_zd_user.photo),
             ),
         )
         return instance
