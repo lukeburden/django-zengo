@@ -45,6 +45,7 @@ class ZendeskUser(models.Model):
     class Meta:
         app_label = "zengo"
 
+    @property
     def photo_url(self):
         if self.photos_json:
             return json.loads(self.photos_json)["content_url"]
