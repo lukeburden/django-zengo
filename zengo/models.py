@@ -48,7 +48,9 @@ class ZendeskUser(models.Model):
     @property
     def photo_url(self):
         if self.photos_json:
-            return json.loads(self.photos_json)["content_url"]
+            j = json.loads(self.photos_json)
+            if j and isinstance(j, dict):
+                return j.get("content_url")
 
 
 class Ticket(models.Model):
