@@ -87,14 +87,14 @@ class ZengoService(object):
             # strong match by external_id
             return result.next(), True
 
-        # else check by associated emails
-        # TODO: move into handler, or make conditional on allauth available
-        # emails = local_user.emailaddress_set.all()
-        # for e in emails:
-        #     result = self.client.search(type="user", email=e.email)
-        #     if result.count:
-        #         # match strength based on email verification state
-        #         return result.next(), e.verified
+        # else check by associated emails, if allauth is installed and being used
+        if "allauth.account" in settings.INSTALLED_APPS:
+            emails = local_user.emailaddress_set.all()
+            for e in emails:
+                result = self.client.search(type="user", email=e.email)
+                if result.count:
+                    # match strength based on email verification state
+                    return result.next(), e.verified
 
         # check for a weak match match using the email field on user instance
         if local_user.email:
@@ -203,15 +203,6 @@ class ZengoService(object):
         )
         return instance
 
-    # def create_ticket_for_local_user(self, ticket):
-    #     """
-    #     Takes a Zenpy Ticket instance, creates it and then syncs the remote
-    #     ticket into our local database. If all goes well, returns a local Ticket
-    #     instance.
-    #     """
-    #     remote_zd_ticket = self.client.tickets.create(ticket)
-    #     return self.sync_ticket(remote_zd_ticket)
-
     def sync_ticket_id(self, ticket_id):
         return self.sync_ticket(self.client.tickets(id=ticket_id))
 
@@ -229,7 +220,6 @@ class ZengoService(object):
             defaults=dict(
                 requester=local_zd_user,
                 subject=remote_zd_ticket.subject,
-                description=remote_zd_ticket.description,
                 url=remote_zd_ticket.url,
                 status=Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
                 custom_fields=json.dumps(remote_zd_ticket.custom_fields),
@@ -238,9 +228,6 @@ class ZengoService(object):
                 updated_at=remote_zd_ticket.updated_at,
             ),
         )
-
-        # sync comments that exist - for a new ticket, there may be none
-        # as the first message is the ticket.description
         self.sync_comments(remote_zd_ticket, local_ticket)
 
         return local_ticket, created
@@ -413,13 +400,6 @@ class ZengoProcessor(object):
         yield
 
 
-def import_attribute(path):
-    assert isinstance(path, str)
-    pkg, attr = path.rsplit(".", 1)
-    ret = getattr(importlib.import_module(pkg), attr)
-    return ret
-
-
 def get_processor():
     cls = app_settings.PROCESSOR_CLASS
     if cls is None:
@@ -432,3 +412,10 @@ def get_service():
     if cls is None:
         return ZengoService()
     return import_attribute(cls)()
+
+
+def import_attribute(path):
+    assert isinstance(path, str)
+    pkg, attr = path.rsplit(".", 1)
+    ret = getattr(importlib.import_module(pkg), attr)
+    return ret

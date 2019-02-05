@@ -371,3 +371,84 @@ two_comments = json.loads(
 }
 """
 )
+
+search_by_external_id_matches = json.loads(
+    r"""{
+  "results": [
+    {
+      "id": 1,
+
+      "name": "Monica",
+      "email": "monica@example.com",
+      "created_at": "2019-01-10T22:06:54Z",
+      "updated_at": "2019-01-11T00:01:37Z",
+      "time_zone": "Arizona",
+      "iana_time_zone": "America/Phoenix",
+      "phone": null,
+      "shared_phone_number": null,
+      "photo": {
+        "url": "https://example.zendesk.com/api/v2/attachments/360058277492.json",
+        "id": 360058277492,
+        "file_name": "IMG_5033.JPG",
+        "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+        "mapped_content_url":"https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033.JPG",
+        "content_type":"image/jpeg",
+        "size":5999,
+        "width":80,
+        "height":68,
+        "inline":false,
+        "thumbnails": [
+          {
+            "url": "https://example.zendesk.com/api/v2/attachments/360058277512.json",
+            "id": 360058277512,
+            "file_name": "IMG_5033_thumb.JPG",
+            "content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+            "mapped_content_url": "https://example.zendesk.com/system/photos/3600/5827/7492/IMG_5033_thumb.JPG",
+            "content_type": "image/jpeg",
+            "size": 1449,
+            "width": 32,
+            "height": 27,
+            "inline": false
+          }
+        ]
+      },
+      "locale_id": 1,
+      "locale": "en-US",
+      "organization_id": null,
+      "role": "end-user",
+      "verified": false,
+      "external_id": 1,
+      "tags": [],
+      "alias": "",
+      "active": true,
+      "shared": false,
+      "shared_agent": false,
+      "last_login_at": null,
+      "two_factor_auth_enabled": false,
+      "signature": null,
+      "details": "",
+      "notes": "",
+      "role_type": null,
+      "custom_role_id": null,
+      "moderator": false,
+      "ticket_restriction": "requested",
+      "only_private_comments": false,
+      "restricted_agent": true,
+      "suspended": false,
+      "chat_only": false,
+      "default_group_id": null,
+      "report_csv": false,
+      "user_fields": {},
+      "result_type": "user"
+    }
+  ],
+  "facets": null,
+  "next_page": null,
+  "previous_page": null,
+  "count": 1
+}"""
+)
+
+search_no_results = json.loads(
+  r"""{"results":[],"facets":null,"next_page":null,"previous_page":null,"count":0}"""
+)

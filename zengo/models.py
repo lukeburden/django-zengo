@@ -59,7 +59,6 @@ class Ticket(models.Model):
     zendesk_id = models.BigIntegerField(unique=True)
     requester = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     subject = models.TextField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
     url = models.URLField(null=True, blank=True)
     states = Constants(
         Constant(new="new"),

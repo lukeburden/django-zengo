@@ -10,6 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
+from . import strings
 from .service import get_processor
 from .settings import app_settings
 
@@ -31,10 +32,10 @@ class WebhookView(View):
 
     def post(self, request):
         if not self.validate_secret():
-            return HttpResponseForbidden(u"Secret missing or wrong")
+            return HttpResponseForbidden(strings.secret_missing_or_wrong)
         processor = get_processor()
         try:
-            event = processor.store_event(request.body)
+            event = processor.store_event(request.body.decode("utf-8"))
         except ValidationError as ve:
             return HttpResponseBadRequest(ve.message)
         processor.begin_processing_event(event)
