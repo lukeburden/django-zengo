@@ -1,4 +1,3 @@
-from setuptools import find_packages
 from setuptools import setup
 
 
@@ -30,7 +29,6 @@ install_requires = [
     "django>=1.11,<3",
     "zenpy>=2,<3",
     "django-konst>=1,<2",
-    "psycopg2-binary>=2,<3",
 ]
 
 tests_require = [
@@ -49,7 +47,7 @@ setup(
     version="1.0.0",
     license="MIT",
     url=URL,
-    packages=find_packages(),
+    packages=["zengo"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
