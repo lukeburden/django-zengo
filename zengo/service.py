@@ -118,8 +118,9 @@ class ZengoService(object):
             )
         except APIException as a:
             # if this is a duplicate error try one last time to get the user
+            print(a.response.json())
             details = a.response.json()["details"]
-            if any([d[0]["error"] for d in details.values()]):
+            if any([d[0]["error"] == "DuplicateValue" for d in details.values()]):
                 remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
                     local_user
                 )
@@ -145,7 +146,7 @@ class ZengoService(object):
         changed = False
         email_changed = False
 
-        if self.get_local_user_name() != remote_zd_user.name:
+        if self.get_local_user_name(local_user) != remote_zd_user.name:
             remote_zd_user.name = self.get_local_user_name(local_user)
             changed = True
 
@@ -183,7 +184,7 @@ class ZengoService(object):
             remote_zd_user = self.create_remote_zd_user_for_local_user(local_user)
         return remote_zd_user
 
-    def update_or_create_local_zd_user_for_remote_zd_user(self, remote_zd_user):
+    def sync_user(self, remote_zd_user):
         """
         Given a RemoteZendeskUser instance, persist it as a LocalZendeskUser instance.
         """
@@ -211,9 +212,7 @@ class ZengoService(object):
         Given a remote Zendesk ticket, store its details, comments and associated users.
         """
         # sync the ticket and comments to establish the new state
-        local_zd_user = self.update_or_create_local_zd_user_for_remote_zd_user(
-            remote_zd_ticket.requester
-        )
+        local_zd_user = self.sync_user(remote_zd_ticket.requester)
 
         local_ticket, created = Ticket.objects.update_or_create(
             zendesk_id=remote_zd_ticket.id,
@@ -238,9 +237,7 @@ class ZengoService(object):
         user_map = {zd_ticket.requester: local_ticket.requester}
         for remote_comment in self.client.tickets.comments(zd_ticket.id):
             if remote_comment.author not in user_map:
-                author = self.update_or_create_local_zd_user_for_remote_zd_user(
-                    remote_comment.author
-                )
+                author = self.sync_user(remote_comment.author)
                 user_map[remote_comment.author] = author
             else:
                 author = user_map[remote_comment.author]

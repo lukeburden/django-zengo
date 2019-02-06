@@ -20,17 +20,20 @@ import responses
 
 from zengo import service
 from zengo import strings
-from zengo.models import Event, Ticket
+from zengo.models import Comment, Event, Ticket
 
 from . import api_responses
 
 
+api_url_base = "https://example.zendesk.com/api/v2/"
+
+
 # test processor methods
-def add_api_responses_no_comment():
+def add_api_responses(comments=None):
     responses.add(
         responses.Response(
             method="GET",
-            url="https://example.zendesk.com/api/v2/tickets/123.json",
+            url=api_url_base + "tickets/123.json",
             match_querystring=False,
             json=api_responses.new_ticket,
             status=200,
@@ -39,7 +42,7 @@ def add_api_responses_no_comment():
     responses.add(
         responses.Response(
             method="GET",
-            url="https://example.zendesk.com/api/v2/users/1.json",
+            url=api_url_base + "users/1.json",
             match_querystring=False,
             json=api_responses.requester,
             status=200,
@@ -48,7 +51,7 @@ def add_api_responses_no_comment():
     responses.add(
         responses.Response(
             method="GET",
-            url="https://example.zendesk.com/api/v2/users/2.json",
+            url=api_url_base + "users/2.json",
             match_querystring=False,
             json=api_responses.submitter,
             status=200,
@@ -57,9 +60,9 @@ def add_api_responses_no_comment():
     responses.add(
         responses.Response(
             method="GET",
-            url="https://example.zendesk.com/api/v2/tickets/123/comments.json",
+            url=api_url_base + "tickets/123/comments.json",
             match_querystring=False,
-            json=api_responses.no_comments,
+            json=comments if comments else api_responses.no_comments,
             status=200,
         )
     )
@@ -141,7 +144,7 @@ def test_processor_process_event_ticket_created(mocker):
     event = processor.store_event("""{"id": 123}""")
 
     # setup fake API
-    add_api_responses_no_comment()
+    add_api_responses()
 
     mocked_created_signal = mocker.patch("zengo.signals.ticket_created.send")
     mocked_updated_signal = mocker.patch("zengo.signals.ticket_updated.send")
@@ -169,7 +172,7 @@ def test_processor_process_event_ticket_updated(mocker):
     processor = service.ZengoProcessor()
     ticket = mommy.make("zengo.Ticket", zendesk_id=123, requester__zendesk_id=1)
     event = processor.store_event("""{"id": 123}""")
-    add_api_responses_no_comment()
+    add_api_responses()
 
     mocked_created_signal = mocker.patch("zengo.signals.ticket_created.send")
     mocked_updated_signal = mocker.patch("zengo.signals.ticket_updated.send")
@@ -274,9 +277,6 @@ def test_processor_get_updated_fields_several_fields_changed(mocker):
     }
 
 
-# test service methods
-
-
 # test WebhookView
 
 
@@ -284,7 +284,7 @@ def test_processor_get_updated_fields_several_fields_changed(mocker):
 def test_webhook_view_missing_secret(client):
     assert Event.objects.count() == 0
     assert Ticket.objects.count() == 0
-    add_api_responses_no_comment()
+    add_api_responses()
     response = client.post(
         reverse("webhook_view"), data=json.dumps(
             {"id": 123}
@@ -300,7 +300,7 @@ def test_webhook_view_missing_secret(client):
 def test_webhook_view_invalid_secret(client):
     assert Event.objects.count() == 0
     assert Ticket.objects.count() == 0
-    add_api_responses_no_comment()
+    add_api_responses()
     response = client.post(
         reverse("webhook_view") + "?secret=face", data=json.dumps(
             {"id": 123}
@@ -316,7 +316,7 @@ def test_webhook_view_invalid_secret(client):
 def test_webhook_view_no_body(client):
     assert Event.objects.count() == 0
     assert Ticket.objects.count() == 0
-    add_api_responses_no_comment()
+    add_api_responses()
     response = client.post(
         reverse("webhook_view") + "?secret=zoomzoom",
         content_type="application/json"
@@ -332,7 +332,7 @@ def test_webhook_view_no_body(client):
 def test_webhook_view_invalid_body(client):
     assert Event.objects.count() == 0
     assert Ticket.objects.count() == 0
-    add_api_responses_no_comment()
+    add_api_responses()
     response = client.post(
         reverse("webhook_view") + "?secret=zoomzoom", data="iamnbotjosn.{}",
         content_type="application/json"
@@ -353,7 +353,7 @@ def test_webhook_view_invalid_body(client):
 def test_webhook_view_ok(client):
     assert Event.objects.count() == 0
     assert Ticket.objects.count() == 0
-    add_api_responses_no_comment()
+    add_api_responses()
     response = client.post(
         reverse("webhook_view") + "?secret=zoomzoom", data=json.dumps(
             {"id": 123}
@@ -393,7 +393,7 @@ def test_get_remote_zd_user_for_local_user_no_matches():
     responses.add(
         responses.Response(
             method="GET",
-            url="""https://example.zendesk.com/api/v2/search.json""",
+            url=api_url_base + "search.json",
             match_querystring=False,
             json=api_responses.search_no_results,
             status=200,
@@ -410,9 +410,9 @@ def test_get_remote_zd_user_for_local_user_with_external_id_match():
     responses.add(
         responses.Response(
             method="GET",
-            url="""https://example.zendesk.com/api/v2/search.json""",
+            url=api_url_base + "search.json",
             match_querystring=False,
-            json=api_responses.search_by_external_id_matches,
+            json=api_responses.search_one_result,
             status=200,
         )
     )
@@ -422,188 +422,536 @@ def test_get_remote_zd_user_for_local_user_with_external_id_match():
     assert remote.external_id == user.id
 
 
-#     def get_remote_zd_user_for_local_user(self, local_user):
-#         """
-#         Attempt to resolve the provided user to an extant Zendesk User.
+@responses.activate
+@pytest.mark.django_db
+def test_get_remote_zd_user_for_local_user_with_allauth_email():
+    user = mommy.make("auth.User", id=1)
+    # no search results when searching by external ID
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    # same as above, but sometimes the params are reversed
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            match_querystring=True,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
 
-#         Returns a Zendesk API User instance, and a boolean that indicates how
-#         definite the resolution is, based on how they've been found.
-#         """
-#         result = self.client.search(
-#             type="user", external_id=self.get_local_user_external_id(local_user)
-#         )
-#         if result.count:
-#             # strong match by external_id
-#             return result.next(), True
+    email = mommy.make(
+        "account.EmailAddress", user=user, verified=False, email="monica@example.com"
+    )
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=email:%22monica@example.com%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    # same as above but sometimes query params are reversed in order
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20email:%22monica@example.com%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
+    assert not is_definite
+    assert remote.email == email.email
 
-#         # else check by associated emails, if allauth is installed and being used
-#         if 'allauth.account' in settings.INSTALLED_APPS:
-#             emails = local_user.emailaddress_set.all()
-#             for e in emails:
-#                 result = self.client.search(type="user", email=e.email)
-#                 if result.count:
-#                     # match strength based on email verification state
-#                     return result.next(), e.verified
+    # adjust the local email to be verified
+    email.verified = True
+    email.save(update_fields=('verified',))
 
-#         # check for a weak match using the email field on user instance
-#         if local_user.email:
-#             result = self.client.search(type="user", email=local_user.email)
-#             if result.count:
-#                 return result.next(), False
+    remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
+    assert is_definite
+    assert remote.email == email.email
 
-#         # no match at all, buh-bow
-#         return None, False
 
-#     def create_remote_zd_user_for_local_user(self, local_user):
-#         """Create a remote zendesk user based on the given local user's details."""
-#         try:
-#             remote_zd_user = self.client.users.create(
-#                 RemoteZendeskUser(
-#                     name=self.get_local_user_name(local_user),
-#                     external_id=self.get_local_user_external_id(local_user),
-#                     email=local_user.email,
-#                     remote_photo_url=self.get_local_user_profile_image(local_user),
-#                 )
-#             )
-#         except APIException as a:
-#             # if this is a duplicate error try one last time to get the user
-#             details = a.response.json()["details"]
-#             if any([d[0]["error"] for d in details.values()]):
-#                 remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
-#                     local_user
-#                 )
-#             else:
-#                 raise
-#         return remote_zd_user
+@responses.activate
+@pytest.mark.django_db
+def test_get_remote_zd_user_for_local_user_with_user_email_attribute():
+    user = mommy.make("auth.User", id=1, email="monica@example.com")
+    # no search results when searching by external ID
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    # same as above, but sometimes the params are reversed
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            match_querystring=True,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    # and a single result when searching by email
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=email:%22monica@example.com%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    # same as above but sometimes query params are reversed in order
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20email:%22monica@example.com%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
+    assert not is_definite
+    assert remote.email == user.email
 
-#     def get_or_create_remote_zd_user_for_local_user(self, local_user):
-#         user, is_definite_match = self.get_remote_zd_user_for_local_user(local_user)
-#         if user:
-#             return user, is_definite_match
-#         # we create a remote user in Zendesk for this local user
-#         return self.create_remote_zd_user_for_local_user(local_user), True
 
-#     def update_remote_zd_user_for_local_user(self, local_user, remote_zd_user):
-#         """
-#         Compare the User and ZendeskUser instances and determine whether we
-#         need to update the data in Zendesk.
+@responses.activate
+@pytest.mark.django_db
+def test_get_remote_zd_user_for_local_user_no_match():
+    user = mommy.make("auth.User")
+    # same as above but sometimes query params are reversed in order
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
+    assert not is_definite
+    assert remote is None
 
-#         This method is suitable to be called when a local user changes their
-#         email address or other user data.
-#         """
-#         changed = False
-#         email_changed = False
 
-#         if self.get_local_user_name() != remote_zd_user.name:
-#             remote_zd_user.name = self.get_local_user_name(local_user)
-#             changed = True
+@responses.activate
+@pytest.mark.django_db
+def test_create_remote_zd_user_for_local_user():
+    user = mommy.make("auth.User")
+    responses.add(
+        responses.Response(
+            method="POST",
+            url=api_url_base + "users.json""",
+            match_querystring=False,
+            json=api_responses.create_user_result,
+            status=201,
+        )
+    )
+    remote = service.ZengoService().create_remote_zd_user_for_local_user(user)
+    assert remote.email == "monica@example.com"
 
-#         if self.get_local_user_external_id(local_user) != remote_zd_user.external_id:
-#             remote_zd_user.external_id = self.get_local_user_external_id(local_user)
-#             changed = True
 
-#         if local_user.email and local_user.email != remote_zd_user.email:
-#             remote_zd_user.email = local_user.email
-#             changed = True
-#             email_changed = True
+@responses.activate
+@pytest.mark.django_db
+def test_create_remote_zd_user_for_local_user_dupe_detected():
+    user = mommy.make("auth.User")
+    responses.add(
+        responses.Response(
+            method="POST",
+            url=api_url_base + "users.json""",
+            match_querystring=False,
+            json=api_responses.create_user_dupe,
+            status=400,
+        )
+    )
 
-#         if changed:
-#             remote_zd_user = self.client.users.update(remote_zd_user)
+    # and then a search by external ID will return the one user
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    # same as above, but sometimes the params are reversed
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
 
-#         if email_changed:
-#             # then in addition to the above, we have to mark the newly
-#             # created identity as verified and promote it to be primary
-#             results = self.client.users.identities(id=remote_zd_user.id)
-#             for identity in results:
-#                 if identity.value == local_user.email:
-#                     self.client.users.identities.make_primary(
-#                         user=remote_zd_user, identity=identity
-#                     )
-#                     break
+    remote = service.ZengoService().create_remote_zd_user_for_local_user(user)
+    assert remote.email == "monica@example.com"
 
-#     def update_or_create_remote_zd_user(self, local_user):
-#         remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
-#             local_user
-#         )
-#         if remote_zd_user and is_definite_match:
-#             # check if we need to do any updates
-#             self.update_remote_zd_user_for_local_user(local_user, remote_zd_user)
-#         else:
-#             remote_zd_user = self.create_remote_zd_user_for_local_user(local_user)
-#         return remote_zd_user
 
-#     def update_or_create_local_zd_user_for_remote_zd_user(self, remote_zd_user):
-#         """
-#         Given a RemoteZendeskUser instance, persist it as a LocalZendeskUser instance.
-#         """
-#         instance, created = LocalZendeskUser.objects.update_or_create(
-#             zendesk_id=remote_zd_user.id,
-#             defaults=dict(
-#                 # attempt to resolve the local user if possible
-#                 user=self.get_local_user_for_external_id(remote_zd_user.external_id),
-#                 email=remote_zd_user.email,
-#                 created_at=remote_zd_user.created_at,
-#                 name=remote_zd_user.name,
-#                 active=remote_zd_user.active,
-#                 role=remote_zd_user.role,
-#                 # store their latest photo JSON data
-#                 photos_json=json.dumps(remote_zd_user.photo),
-#             ),
-#         )
-#         return instance
+@responses.activate
+@pytest.mark.django_db
+def test_get_or_create_remote_zd_user_for_local_user_get():
+    user = mommy.make("auth.User")
+    # search by external ID returns a result
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    # same as above, but sometimes the params are reversed
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            match_querystring=True,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+    # user will be found based on external ID, so definite
+    assert is_definite
+    assert remote is not None
 
-#     def sync_ticket_id(self, ticket_id):
-#         return self.sync_ticket(self.client.tickets(id=ticket_id))
 
-#     def sync_ticket(self, remote_zd_ticket):
-#         """
-#         Given a remote Zendesk ticket, store its details, comments and associated users.
-#         """
-#         # sync the ticket and comments to establish the new state
-#         local_zd_user = self.update_or_create_local_zd_user_for_remote_zd_user(
-#             remote_zd_ticket.requester
-#         )
+@responses.activate
+@pytest.mark.django_db
+def test_get_or_create_remote_zd_user_for_local_user_create():
+    user = mommy.make("auth.User")
+    # all searches return no result
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    # creation works
+    responses.add(
+        responses.Response(
+            method="POST",
+            url=api_url_base + "users.json""",
+            match_querystring=False,
+            json=api_responses.create_user_result,
+            status=201,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+    # user will be created with external ID set
+    assert is_definite
+    assert remote is not None
 
-#         local_ticket, created = Ticket.objects.update_or_create(
-#             zendesk_id=remote_zd_ticket.id,
-#             defaults=dict(
-#                 requester=local_zd_user,
-#                 subject=remote_zd_ticket.subject,
-#                 url=remote_zd_ticket.url,
-#                 status=Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
-#                 custom_fields=json.dumps(remote_zd_ticket.custom_fields),
-#                 tags=json.dumps(remote_zd_ticket.tags),
-#                 created_at=remote_zd_ticket.created_at,
-#                 updated_at=remote_zd_ticket.updated_at,
-#             ),
-#         )
-#         self.sync_comments(remote_zd_ticket, local_ticket)
 
-#         return local_ticket, created
+@responses.activate
+@pytest.mark.django_db
+def test_update_remote_zd_user_for_local_user():
+    user = mommy.make("auth.User", email="monica@example.com")
 
-#     def sync_comments(self, zd_ticket, local_ticket):
-#         local_comments = []
-#         # no need to sync the ticket requester as we'll have just done that
-#         user_map = {zd_ticket.requester: local_ticket.requester}
-#         for remote_comment in self.client.tickets.comments(zd_ticket.id):
-#             if remote_comment.author not in user_map:
-#                 author = self.update_or_create_local_zd_user_for_remote_zd_user(
-#                     remote_comment.author
-#                 )
-#                 user_map[remote_comment.author] = author
-#             else:
-#                 author = user_map[remote_comment.author]
-#             local_comment, created = Comment.objects.update_or_create(
-#                 zendesk_id=remote_comment.id,
-#                 ticket=local_ticket,
-#                 defaults=dict(
-#                     author=author,
-#                     body=remote_comment.body,
-#                     public=remote_comment.public,
-#                     created_at=remote_comment.created_at,
-#                 ),
-#             )
-#             local_comments.append(local_comment)
-#         # sort increasing by created and id
-#         local_comments.sort(key=lambda c: (c.created_at, c.id))
-#         return local_comments
+    # any search returns our one user
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+
+    assert remote is not None
+    assert remote.email == "monica@example.com"
+
+    # make a change of the user's email, triggering an identity update
+    user.email = "monica2@example.com"
+
+    # our individual user updated
+    responses.add(
+        responses.Response(
+            method="PUT",
+            url=api_url_base + "users/1.json",
+            match_querystring=False,
+            json=api_responses.update_user_ok,
+            status=200,
+        )
+    )
+
+    # add support for looking up a user's identities
+    responses.add(
+        responses.Response(
+            method="GET",
+            url="https:////example.zendesk.com/api/v2/users/1/identities.json",
+            match_querystring=False,
+            json=api_responses.user_identities,
+            status=200,
+        )
+    )
+
+    # and when the second identity is found, it will be made primary
+    responses.add(
+        responses.Response(
+            method="PUT",
+            url=api_url_base + "users/1/identities/2/make_primary",
+            match_querystring=False,
+            json=api_responses.identity_make_primary,
+            status=200,
+        )
+    )
+
+    service.ZengoService().update_remote_zd_user_for_local_user(user, remote)
+
+    assert len(responses.calls) == 4
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_update_or_create_remote_zd_user_create():
+    # all searches return no results
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_no_results,
+            status=200,
+        )
+    )
+    # creation of a user will work
+    responses.add(
+        responses.Response(
+            method="POST",
+            url=api_url_base + "users.json""",
+            match_querystring=False,
+            json=api_responses.create_user_result,
+            status=201,
+        )
+    )
+    user = mommy.make("auth.User")
+    remote = service.ZengoService().update_or_create_remote_zd_user(user)
+    assert remote is not None
+    assert len(responses.calls) == 2
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_update_or_create_remote_zd_user_update():
+    # all searches return no results
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    user = mommy.make("auth.User")
+    user.email = "monica2@example.com"
+    user.save(update_fields=("email",))
+
+    # our individual user updated
+    responses.add(
+        responses.Response(
+            method="PUT",
+            url=api_url_base + "users/1.json",
+            match_querystring=False,
+            json=api_responses.update_user_ok,
+            status=200,
+        )
+    )
+
+    # add support for looking up a user's identities
+    responses.add(
+        responses.Response(
+            method="GET",
+            url="https:////example.zendesk.com/api/v2/users/1/identities.json",
+            match_querystring=False,
+            json=api_responses.user_identities,
+            status=200,
+        )
+    )
+
+    # and when the second identity is found, it will be made primary
+    responses.add(
+        responses.Response(
+            method="PUT",
+            url=api_url_base + "users/1/identities/2/make_primary",
+            match_querystring=False,
+            json=api_responses.identity_make_primary,
+            status=200,
+        )
+    )
+
+    remote = service.ZengoService().update_or_create_remote_zd_user(user)
+    assert remote is not None
+    assert len(responses.calls) == 4
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_user():
+    user = mommy.make("auth.User", id=1)
+    # allow for discovery of a remote user
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "search.json""",
+            match_querystring=False,
+            json=api_responses.search_one_result,
+            status=200,
+        )
+    )
+    remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
+
+    # this is a local instance representing the remote ZD user
+    local_zd_user = service.ZengoService().sync_user(remote)
+
+    assert local_zd_user.zendesk_id == remote.id
+    assert local_zd_user.email == remote.email
+    # user should be found and linked
+    assert local_zd_user.user == user
+    assert local_zd_user.created_at == remote.created_at
+    assert local_zd_user.name == remote.name
+    assert local_zd_user.active == remote.active
+    assert local_zd_user.role == remote.role
+    assert local_zd_user.photos_json == json.dumps(remote.photo)
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_ticket():
+    # allow for fetching of a ticket with no comments
+    add_api_responses()
+    remote_ticket = service.ZengoService().client.tickets(id=123)
+    local_ticket, created = service.ZengoService().sync_ticket(remote_ticket)
+
+    assert created
+    assert local_ticket.zendesk_id == remote_ticket.id
+    assert local_ticket.requester.zendesk_id == remote_ticket.requester.id
+    assert local_ticket.subject == remote_ticket.subject
+    assert local_ticket.url == remote_ticket.url
+    assert local_ticket.status == remote_ticket.status
+    assert local_ticket.custom_fields == json.dumps(remote_ticket.custom_fields)
+    assert local_ticket.tags == json.dumps(remote_ticket.tags)
+    assert local_ticket.created_at == remote_ticket.created_at
+    assert local_ticket.updated_at == remote_ticket.updated_at
+
+    assert local_ticket.comments.count() == 0
+
+    assert len(responses.calls) == 3
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_ticket_id():
+    # allow for fetching of a ticket with no comments
+    add_api_responses()
+    local_ticket, created = service.ZengoService().sync_ticket_id(123)
+    assert created
+    assert local_ticket is not None
+    assert len(responses.calls) == 3
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_comments():
+    add_api_responses(comments=api_responses.two_comments)
+    # override with comments
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "tickets/123/comments.json",
+            match_querystring=False,
+            json=api_responses.two_comments,
+            status=200,
+        )
+    )
+    # assume local ticket has already been created
+    local_ticket = mommy.make('zengo.Ticket')
+    assert Comment.objects.count() == 0
+    remote_ticket = service.ZengoService().client.tickets(id=123)
+
+    local_comments = service.ZengoService().sync_comments(
+        remote_ticket, local_ticket
+    )
+    assert len(local_comments) == 2
+    assert Comment.objects.count() == 2
+
+    remote_comments = service.ZengoService().client.tickets.comments(remote_ticket.id)
+
+    remote = list(remote_comments)[0]
+    local = local_comments[0]
+
+    assert local.zendesk_id == remote.id
+    assert local.ticket == local_ticket
+    assert local.author.zendesk_id == remote.author.id
+    assert local.body == remote.body
+    assert local.public == remote.public
+    assert local.created_at == remote.created_at
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_comments_one_comment_already_exists():
+    add_api_responses(comments=api_responses.two_comments)
+    # override with comments
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "tickets/123/comments.json",
+            match_querystring=False,
+            json=api_responses.two_comments,
+            status=200,
+        )
+    )
+    # assume local ticket has already been created
+    local_ticket = mommy.make('zengo.Ticket')
+    remote_ticket = service.ZengoService().client.tickets(id=123)
+    remote_comments = list(
+        service.ZengoService().client.tickets.comments(remote_ticket.id)
+    )
+
+    # create one of the comments ahead of time
+    comment = mommy.make(
+        "zengo.Comment",
+        zendesk_id=remote_comments[0].id,
+        ticket=local_ticket,
+    )
+
+    assert local_ticket.comments.count() == 1
+
+    # now sync comments, which should discover the second comment
+    local_comments = service.ZengoService().sync_comments(
+        remote_ticket, local_ticket
+    )
+    assert len(local_comments) == 2
+
+    assert local_ticket.comments.count() == 2
+
+    # ensure the earlier comment is the same instance
+    assert local_comments[0] == comment
