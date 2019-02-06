@@ -881,16 +881,6 @@ def test_sync_ticket_id():
 @pytest.mark.django_db
 def test_sync_comments():
     add_api_responses(comments=api_responses.two_comments)
-    # override with comments
-    responses.add(
-        responses.Response(
-            method="GET",
-            url=api_url_base + "tickets/123/comments.json",
-            match_querystring=False,
-            json=api_responses.two_comments,
-            status=200,
-        )
-    )
     # assume local ticket has already been created
     local_ticket = mommy.make('zengo.Ticket')
     assert Comment.objects.count() == 0
@@ -919,16 +909,6 @@ def test_sync_comments():
 @pytest.mark.django_db
 def test_sync_comments_one_comment_already_exists():
     add_api_responses(comments=api_responses.two_comments)
-    # override with comments
-    responses.add(
-        responses.Response(
-            method="GET",
-            url=api_url_base + "tickets/123/comments.json",
-            match_querystring=False,
-            json=api_responses.two_comments,
-            status=200,
-        )
-    )
     # assume local ticket has already been created
     local_ticket = mommy.make('zengo.Ticket')
     remote_ticket = service.ZengoService().client.tickets(id=123)
