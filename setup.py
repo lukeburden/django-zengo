@@ -1,29 +1,14 @@
 from setuptools import setup
 
 
-NAME = "django-zengo"
-DESCRIPTION = "Integrate Zendesk and your Django app"
-AUTHOR = "Luke Burden"
-AUTHOR_EMAIL = "lukeburden@gmail.com"
-URL = "https://github.com/lukeburden/django-zengo"
-LONG_DESCRIPTION = """
-============
-Integrate Zendesk and your Django app
-============
-.. image:: https://img.shields.io/travis/lukeburden/django-zengo.svg
-    :target: https://travis-ci.org/lukeburden/django-zengo
-.. image:: https://img.shields.io/codecov/c/github/lukeburden/django-zengo.svg
-    :target: https://codecov.io/gh/lukeburden/django-zengo
-.. image:: https://img.shields.io/pypi/dm/django-zengo.svg
-    :target:  https://pypi.python.org/pypi/django-zengo/
-.. image:: https://img.shields.io/pypi/v/django-zengo.svg
-    :target:  https://pypi.python.org/pypi/django-zengo/
-.. image:: https://img.shields.io/badge/license-MIT-blue.svg
-    :target:  https://pypi.python.org/pypi/django-zengo/
+name = "django-zengo"
+description = "Integrate Zendesk and your Django app"
+author = "Luke Burden"
+author_email = "lukeburden@gmail.com"
+url = "https://github.com/lukeburden/django-zengo"
 
-Zengo facilitates receiving webhook updates from Zendesk and detecting new tickets and comments on existing tickets
-whilst maintaining a local cache of Zendesk ticket, comment and user data.
-"""
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 install_requires = [
     "django>=1.11,<3",
@@ -39,20 +24,21 @@ tests_require = [
 ]
 
 setup(
-    name=NAME,
-    author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
-    description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
-    version="1.0.0",
+    name=name,
+    author=author,
+    author_email=author_email,
+    description=description,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    version="1.0.3",
     license="MIT",
-    url=URL,
+    url=url,
     packages=["zengo"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
-        "License :: MIT License",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
