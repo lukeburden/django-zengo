@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 name = "django-zengo"
@@ -30,10 +30,10 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.0.3",
+    version="1.0.4",
     license="MIT",
     url=url,
-    packages=["zengo"],
+    packages=find_packages(exclude=["tests", "testproj"]),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
