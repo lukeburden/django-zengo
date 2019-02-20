@@ -6,11 +6,13 @@ import json
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
 
 
+@python_2_unicode_compatible
 class ZendeskUser(models.Model):
     """
     Link between a user in Zendesk and the local system.
@@ -45,6 +47,11 @@ class ZendeskUser(models.Model):
     class Meta:
         app_label = "zengo"
 
+    def __str__(self):
+        return "{} - {} (id={} zendesk_id={})".format(
+            self.name, self.email, self.id, self.zendesk_id
+        )
+
     @property
     def photo_url(self):
         if self.photos_json:
@@ -53,6 +60,7 @@ class ZendeskUser(models.Model):
                 return j.get("content_url")
 
 
+@python_2_unicode_compatible
 class Ticket(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -79,7 +87,13 @@ class Ticket(models.Model):
     class Meta:
         app_label = "zengo"
 
+    def __str__(self):
+        return "{} - {} (id={} zendesk_id={})".format(
+            self.subject, self.status, self.id, self.zendesk_id
+        )
 
+
+@python_2_unicode_compatible
 class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -95,7 +109,13 @@ class Comment(models.Model):
     class Meta:
         app_label = "zengo"
 
+    def __str__(self):
+        return "{} - {} (id={} zendesk_id={})".format(
+            self.author, self.public, self.id, self.zendesk_id
+        )
 
+
+@python_2_unicode_compatible
 class Event(models.Model):
     """
     Persist details around a single occurrence of Zendesk hitting the webhook view.
@@ -121,6 +141,11 @@ class Event(models.Model):
 
     class Meta:
         app_label = "zengo"
+
+    def __str__(self):
+        return "{} (id={} remote_ticket_id={})".format(
+            "Errored" if self.error else "Processed", self.id, self.remote_ticket_id
+        )
 
     @property
     def json(self):
