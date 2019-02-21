@@ -244,7 +244,7 @@ class ZengoService(object):
         )
         # and now update or create the comments
         for remote_comment in remote_comments:
-            local_comment, created = Comment.objects.update_or_create(
+            local_comment, _created = Comment.objects.update_or_create(
                 zendesk_id=remote_comment.id,
                 ticket=local_ticket,
                 defaults=dict(
