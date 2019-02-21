@@ -4,8 +4,8 @@ import json
 new_ticket = json.loads(
     r"""{
   "ticket": {
-    "url": "https://example.zendesk.com/api/v2/tickets/123.json",
-    "id": 123,
+    "url": "https://example.zendesk.com/api/v2/tickets/1.json",
+    "id": 1,
     "external_id": null,
     "via": {
       "channel": "email",

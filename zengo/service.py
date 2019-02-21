@@ -209,15 +209,30 @@ class ZengoService(object):
 
     def sync_ticket(self, remote_zd_ticket):
         """
-        Given a remote Zendesk ticket, store its details, comments and associated users.
-        """
-        # sync the ticket and comments to establish the new state
-        local_zd_user = self.sync_user(remote_zd_ticket.requester)
+        Create or update local representations of a Zendesk ticket, its comments
+        and all associated Zendesk users.
 
+        This uses `update_or_create` to avoid integrity errors, demanding that
+        comments and users be sync'd in a consistent order to avoid deadlock.
+        """
+
+        # todo: only pull comments beyond those we've already got in the database
+        remote_comments = [c for c in self.client.tickets.comments(remote_zd_ticket.id)]
+        remote_comments.sort(key=lambda c: (c.created_at, c.id))
+
+        # establish a distinct, ordered list of Zendesk users
+        users = set([remote_zd_ticket.requester] + [c.author for c in remote_comments])
+        users = list(users)
+        users.sort(key=lambda u: u.id)
+
+        # sync the users and establish a mapping to local records
+        user_map = {u: self.sync_user(u) for u in users}
+
+        # update or create the ticket
         local_ticket, created = Ticket.objects.update_or_create(
             zendesk_id=remote_zd_ticket.id,
             defaults=dict(
-                requester=local_zd_user,
+                requester=user_map[remote_zd_ticket.requester],
                 subject=remote_zd_ticket.subject,
                 url=remote_zd_ticket.url,
                 status=Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
@@ -227,34 +242,20 @@ class ZengoService(object):
                 updated_at=remote_zd_ticket.updated_at,
             ),
         )
-        self.sync_comments(remote_zd_ticket, local_ticket)
-
-        return local_ticket, created
-
-    def sync_comments(self, zd_ticket, local_ticket):
-        local_comments = []
-        # no need to sync the ticket requester as we'll have just done that
-        user_map = {zd_ticket.requester: local_ticket.requester}
-        for remote_comment in self.client.tickets.comments(zd_ticket.id):
-            if remote_comment.author not in user_map:
-                author = self.sync_user(remote_comment.author)
-                user_map[remote_comment.author] = author
-            else:
-                author = user_map[remote_comment.author]
-            local_comment, created = Comment.objects.update_or_create(
+        # and now update or create the comments
+        for remote_comment in remote_comments:
+            local_comment, _created = Comment.objects.update_or_create(
                 zendesk_id=remote_comment.id,
                 ticket=local_ticket,
                 defaults=dict(
-                    author=author,
+                    author=user_map[remote_comment.author],
                     body=remote_comment.body,
                     public=remote_comment.public,
                     created_at=remote_comment.created_at,
                 ),
             )
-            local_comments.append(local_comment)
-        # sort increasing by created and id
-        local_comments.sort(key=lambda c: (c.created_at, c.id))
-        return local_comments
+
+        return local_ticket, created
 
 
 class ZengoProcessor(object):
@@ -292,11 +293,13 @@ class ZengoProcessor(object):
 
     def process_event_and_record_errors(self, event):
         try:
-            # isolate any processing errors using a transaction, such that
-            # we can perform further queries to store the error info
-            with transaction.atomic():
-                # potentially serialize processing per-ticket
-                with self.acquire_ticket_lock(event.remote_ticket_id):
+            # potentially serialize processing per-ticket such that there isn't
+            # doubling up on signals firing
+            with self.acquire_ticket_lock(event.remote_ticket_id):
+                # contain updates in a transaction such that if a database error
+                # occurs and this method is already in an atomic block, we can still
+                # record the details of the error in the database
+                with transaction.atomic():
                     self.process_event(event)
 
         except Exception:
