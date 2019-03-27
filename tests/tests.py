@@ -432,7 +432,7 @@ def test_get_remote_zd_user_for_local_user_with_allauth_email():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            url=api_url_base + "search.json?query=external_id:1%20type:user",
             match_querystring=True,
             json=api_responses.search_no_results,
             status=200,
@@ -442,7 +442,7 @@ def test_get_remote_zd_user_for_local_user_with_allauth_email():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            url=api_url_base + "search.json?query=type:user%20external_id:1",
             match_querystring=True,
             json=api_responses.search_no_results,
             status=200,
@@ -455,7 +455,7 @@ def test_get_remote_zd_user_for_local_user_with_allauth_email():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=email:%22monica@example.com%22%20type:%22user%22",
+            url=api_url_base + "search.json?query=email:monica@example.com%20type:user",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -465,7 +465,7 @@ def test_get_remote_zd_user_for_local_user_with_allauth_email():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20email:%22monica@example.com%22",
+            url=api_url_base + "search.json?query=type:user%20email:monica@example.com",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -492,7 +492,7 @@ def test_get_remote_zd_user_for_local_user_with_user_email_attribute():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            url=api_url_base + "search.json?query=external_id:1%20type:user",
             match_querystring=True,
             json=api_responses.search_no_results,
             status=200,
@@ -502,7 +502,7 @@ def test_get_remote_zd_user_for_local_user_with_user_email_attribute():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            url=api_url_base + "search.json?query=type:user%20external_id:1",
             match_querystring=True,
             json=api_responses.search_no_results,
             status=200,
@@ -512,7 +512,7 @@ def test_get_remote_zd_user_for_local_user_with_user_email_attribute():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=email:%22monica@example.com%22%20type:%22user%22",
+            url=api_url_base + "search.json?query=email:monica@example.com%20type:user",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -522,7 +522,7 @@ def test_get_remote_zd_user_for_local_user_with_user_email_attribute():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20email:%22monica@example.com%22",
+            url=api_url_base + "search.json?query=type:user%20email:monica@example.com",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -587,7 +587,7 @@ def test_create_remote_zd_user_for_local_user_dupe_detected():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
+            url=api_url_base + "search.json?query=external_id:1%20type:user",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -597,7 +597,7 @@ def test_create_remote_zd_user_for_local_user_dupe_detected():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
+            url=api_url_base + "search.json?query=type:user%20external_id:1",
             match_querystring=True,
             json=api_responses.search_one_result,
             status=200,
@@ -616,18 +616,8 @@ def test_get_or_create_remote_zd_user_for_local_user_get():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json?query=external_id:%221%22%20type:%22user%22",
-            match_querystring=True,
-            json=api_responses.search_one_result,
-            status=200,
-        )
-    )
-    # same as above, but sometimes the params are reversed
-    responses.add(
-        responses.Response(
-            method="GET",
-            url=api_url_base + "search.json?query=type:%22user%22%20external_id:%221%22",
-            match_querystring=True,
+            url=api_url_base + "search.json",
+            match_querystring=False,
             json=api_responses.search_one_result,
             status=200,
         )
