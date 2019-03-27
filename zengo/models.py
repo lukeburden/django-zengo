@@ -44,9 +44,6 @@ class ZendeskUser(models.Model):
         get_user_model(), null=True, blank=True, on_delete=models.PROTECT
     )
 
-    class Meta:
-        app_label = "zengo"
-
     def __str__(self):
         return "{} - {} (id={} zendesk_id={})".format(
             self.name, self.email, self.id, self.zendesk_id
@@ -84,9 +81,6 @@ class Ticket(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(null=True, blank=True)
 
-    class Meta:
-        app_label = "zengo"
-
     def __str__(self):
         return "{} - {} (id={} zendesk_id={})".format(
             self.subject, self.status, self.id, self.zendesk_id
@@ -103,15 +97,65 @@ class Comment(models.Model):
     )
     author = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     body = models.TextField(null=True, blank=True)
+    html_body = models.TextField(null=True, blank=True)
+    plain_body = models.TextField(null=True, blank=True)
     public = models.BooleanField()
     created_at = models.DateTimeField()
-
-    class Meta:
-        app_label = "zengo"
 
     def __str__(self):
         return "{} - {} (id={} zendesk_id={})".format(
             self.author, self.public, self.id, self.zendesk_id
+        )
+
+
+@python_2_unicode_compatible
+class Attachment(models.Model):
+
+    id = models.BigAutoField(primary_key=True)
+
+    zendesk_id = models.BigIntegerField(unique=True)
+    file_name = models.TextField()
+    content_url = models.URLField()
+    content_type = models.TextField()
+    size = models.BigIntegerField()
+
+    # image only fields
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+    inline = models.BooleanField()
+
+    # which comment this attachment belongs to
+    comment = models.ForeignKey(
+        Comment, related_name="attachments", on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return "{} (id={} zendesk_id={})".format(
+            self.file_name, self.id, self.zendesk_id
+        )
+
+
+@python_2_unicode_compatible
+class Photo(models.Model):
+
+    id = models.BigAutoField(primary_key=True)
+
+    zendesk_id = models.BigIntegerField(unique=True)
+    file_name = models.TextField()
+    content_url = models.URLField()
+    content_type = models.TextField()
+    size = models.BigIntegerField()
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+
+    # what attachment these are a thumbnail for
+    attachment = models.ForeignKey(
+        Attachment, related_name="photos", on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return "{} (id={} zendesk_id={})".format(
+            self.file_name, self.id, self.zendesk_id
         )
 
 
@@ -138,9 +182,6 @@ class Event(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = "zengo"
 
     def __str__(self):
         return "{} (id={} remote_ticket_id={})".format(

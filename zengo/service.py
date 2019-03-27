@@ -17,12 +17,9 @@ from zenpy import Zenpy
 from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
 
+from . import models
 from . import signals
 from . import strings
-from .models import Comment
-from .models import Event
-from .models import Ticket
-from .models import ZendeskUser as LocalZendeskUser
 from .settings import app_settings
 
 
@@ -186,9 +183,9 @@ class ZengoService(object):
 
     def sync_user(self, remote_zd_user):
         """
-        Given a RemoteZendeskUser instance, persist it as a LocalZendeskUser instance.
+        Given a RemoteZendeskUser instance, persist it as a local ZendeskUser instance.
         """
-        instance, created = LocalZendeskUser.objects.update_or_create(
+        instance, created = models.ZendeskUser.objects.update_or_create(
             zendesk_id=remote_zd_user.id,
             defaults=dict(
                 # attempt to resolve the local user if possible
@@ -229,13 +226,13 @@ class ZengoService(object):
         user_map = {u: self.sync_user(u) for u in users}
 
         # update or create the ticket
-        local_ticket, created = Ticket.objects.update_or_create(
+        local_ticket, created = models.Ticket.objects.update_or_create(
             zendesk_id=remote_zd_ticket.id,
             defaults=dict(
                 requester=user_map[remote_zd_ticket.requester],
                 subject=remote_zd_ticket.subject,
                 url=remote_zd_ticket.url,
-                status=Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
+                status=models.Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
                 custom_fields=json.dumps(remote_zd_ticket.custom_fields),
                 tags=json.dumps(remote_zd_ticket.tags),
                 created_at=remote_zd_ticket.created_at,
@@ -244,16 +241,45 @@ class ZengoService(object):
         )
         # and now update or create the comments
         for remote_comment in remote_comments:
-            local_comment, _created = Comment.objects.update_or_create(
+            local_comment, _created = models.Comment.objects.update_or_create(
                 zendesk_id=remote_comment.id,
                 ticket=local_ticket,
                 defaults=dict(
                     author=user_map[remote_comment.author],
                     body=remote_comment.body,
+                    html_body=remote_comment.body,
+                    plain_body=remote_comment.body,
                     public=remote_comment.public,
                     created_at=remote_comment.created_at,
                 ),
             )
+            for attachment in remote_comment.attachments:
+                local_attachment, _created = models.Attachment.objects.update_or_create(
+                    zendesk_id=attachment.id,
+                    comment=local_comment,
+                    defaults=dict(
+                        file_name=attachment.file_name,
+                        content_url=attachment.content_url,
+                        content_type=attachment.content_type,
+                        size=attachment.size,
+                        width=attachment.width,
+                        height=attachment.height,
+                        inline=attachment.inline,
+                    ),
+                )
+                for photo in attachment.thumbnails:
+                    local_photo, _created = models.Photo.objects.update_or_create(
+                        zendesk_id=photo.id,
+                        attachment=local_attachment,
+                        defaults=dict(
+                            file_name=photo.file_name,
+                            content_url=photo.content_url,
+                            content_type=photo.content_type,
+                            size=photo.size,
+                            width=photo.width,
+                            height=photo.height,
+                        ),
+                    )
 
         return local_ticket, created
 
@@ -268,7 +294,7 @@ class ZengoProcessor(object):
 
     def store_event(self, data):
         """Take raw request body and parse then store an event."""
-        event = Event.objects.create(raw_data=data)
+        event = models.Event.objects.create(raw_data=data)
         event.save()
         try:
             data = json.loads(data)
@@ -323,7 +349,7 @@ class ZengoProcessor(object):
         ticket_id = event.remote_ticket_id
 
         # take a snapshot of the ticket and its comments in their old state
-        pre_sync_ticket = Ticket.objects.filter(zendesk_id=ticket_id).first()
+        pre_sync_ticket = models.Ticket.objects.filter(zendesk_id=ticket_id).first()
         pre_sync_comments = []
         if pre_sync_ticket:
             pre_sync_comments = list(pre_sync_ticket.comments.all())
@@ -342,12 +368,12 @@ class ZengoProcessor(object):
 
         if created and not post_sync_comments:
             signals.ticket_created.send(
-                sender=Ticket, ticket=post_sync_ticket, context=update_context
+                sender=models.Ticket, ticket=post_sync_ticket, context=update_context
             )
 
         else:
             signals.ticket_updated.send(
-                sender=Ticket,
+                sender=models.Ticket,
                 ticket=post_sync_ticket,
                 updates=self.get_updates(**update_context),
                 context=update_context,

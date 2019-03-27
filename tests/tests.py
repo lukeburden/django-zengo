@@ -288,10 +288,9 @@ def test_webhook_view_missing_secret(client):
     assert Ticket.objects.count() == 0
     add_api_responses()
     response = client.post(
-        reverse("webhook_view"), data=json.dumps(
-            {"id": 1}
-        ),
-        content_type="application/json"
+        reverse("webhook_view"),
+        data=json.dumps({"id": 1}),
+        content_type="application/json",
     )
     assert response.status_code == 403
     assert Event.objects.count() == 0
@@ -304,10 +303,9 @@ def test_webhook_view_invalid_secret(client):
     assert Ticket.objects.count() == 0
     add_api_responses()
     response = client.post(
-        reverse("webhook_view") + "?secret=face", data=json.dumps(
-            {"id": 1}
-        ),
-        content_type="application/json"
+        reverse("webhook_view") + "?secret=face",
+        data=json.dumps({"id": 1}),
+        content_type="application/json",
     )
     assert response.status_code == 403
     assert Event.objects.count() == 0
@@ -320,8 +318,7 @@ def test_webhook_view_no_body(client):
     assert Ticket.objects.count() == 0
     add_api_responses()
     response = client.post(
-        reverse("webhook_view") + "?secret=zoomzoom",
-        content_type="application/json"
+        reverse("webhook_view") + "?secret=zoomzoom", content_type="application/json"
     )
     assert response.status_code == 400
     assert Event.objects.count() == 1
@@ -336,8 +333,9 @@ def test_webhook_view_invalid_body(client):
     assert Ticket.objects.count() == 0
     add_api_responses()
     response = client.post(
-        reverse("webhook_view") + "?secret=zoomzoom", data="iamnbotjosn.{}",
-        content_type="application/json"
+        reverse("webhook_view") + "?secret=zoomzoom",
+        data="iamnbotjosn.{}",
+        content_type="application/json",
     )
     assert response.status_code == 400
     assert Event.objects.count() == 1
@@ -357,10 +355,9 @@ def test_webhook_view_ok(client):
     assert Ticket.objects.count() == 0
     add_api_responses()
     response = client.post(
-        reverse("webhook_view") + "?secret=zoomzoom", data=json.dumps(
-            {"id": 1}
-        ),
-        content_type="application/json"
+        reverse("webhook_view") + "?secret=zoomzoom",
+        data=json.dumps({"id": 1}),
+        content_type="application/json",
     )
     assert response.status_code == 200
     assert Event.objects.count() == 1
@@ -402,7 +399,10 @@ def test_get_remote_zd_user_for_local_user_no_matches():
         )
     )
     # there will be no match, all searches return no results
-    assert service.ZengoService().get_remote_zd_user_for_local_user(user) == (None, False)
+    assert service.ZengoService().get_remote_zd_user_for_local_user(user) == (
+        None,
+        False,
+    )
 
 
 @responses.activate
@@ -477,7 +477,7 @@ def test_get_remote_zd_user_for_local_user_with_allauth_email():
 
     # adjust the local email to be verified
     email.verified = True
-    email.save(update_fields=('verified',))
+    email.save(update_fields=("verified",))
 
     remote, is_definite = service.ZengoService().get_remote_zd_user_for_local_user(user)
     assert is_definite
@@ -541,7 +541,7 @@ def test_get_remote_zd_user_for_local_user_no_match():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_no_results,
             status=200,
@@ -559,7 +559,7 @@ def test_create_remote_zd_user_for_local_user():
     responses.add(
         responses.Response(
             method="POST",
-            url=api_url_base + "users.json""",
+            url=api_url_base + "users.json" "",
             match_querystring=False,
             json=api_responses.create_user_result,
             status=201,
@@ -576,7 +576,7 @@ def test_create_remote_zd_user_for_local_user_dupe_detected():
     responses.add(
         responses.Response(
             method="POST",
-            url=api_url_base + "users.json""",
+            url=api_url_base + "users.json" "",
             match_querystring=False,
             json=api_responses.create_user_dupe,
             status=400,
@@ -622,7 +622,9 @@ def test_get_or_create_remote_zd_user_for_local_user_get():
             status=200,
         )
     )
-    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(
+        user
+    )
     # user will be found based on external ID, so definite
     assert is_definite
     assert remote is not None
@@ -636,7 +638,7 @@ def test_get_or_create_remote_zd_user_for_local_user_create():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_no_results,
             status=200,
@@ -646,13 +648,15 @@ def test_get_or_create_remote_zd_user_for_local_user_create():
     responses.add(
         responses.Response(
             method="POST",
-            url=api_url_base + "users.json""",
+            url=api_url_base + "users.json" "",
             match_querystring=False,
             json=api_responses.create_user_result,
             status=201,
         )
     )
-    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(
+        user
+    )
     # user will be created with external ID set
     assert is_definite
     assert remote is not None
@@ -667,14 +671,16 @@ def test_update_remote_zd_user_for_local_user():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_one_result,
             status=200,
         )
     )
 
-    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(user)
+    remote, is_definite = service.ZengoService().get_or_create_remote_zd_user_for_local_user(
+        user
+    )
 
     assert remote is not None
     assert remote.email == "monica@example.com"
@@ -727,7 +733,7 @@ def test_update_or_create_remote_zd_user_create():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_no_results,
             status=200,
@@ -737,7 +743,7 @@ def test_update_or_create_remote_zd_user_create():
     responses.add(
         responses.Response(
             method="POST",
-            url=api_url_base + "users.json""",
+            url=api_url_base + "users.json" "",
             match_querystring=False,
             json=api_responses.create_user_result,
             status=201,
@@ -756,7 +762,7 @@ def test_update_or_create_remote_zd_user_update():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_one_result,
             status=200,
@@ -812,7 +818,7 @@ def test_sync_user():
     responses.add(
         responses.Response(
             method="GET",
-            url=api_url_base + "search.json""",
+            url=api_url_base + "search.json" "",
             match_querystring=False,
             json=api_responses.search_one_result,
             status=200,
@@ -888,6 +894,8 @@ def test_sync_ticket_with_comments():
     assert local.ticket == local_ticket
     assert local.author.zendesk_id == remote.author.id
     assert local.body == remote.body
+    assert local.html_body == remote.html_body
+    assert local.plain_body == remote.plain_body
     assert local.public == remote.public
     assert local.created_at == dateutil.parser.parse(remote.created_at)
 
@@ -897,16 +905,12 @@ def test_sync_ticket_with_comments():
 def test_sync_ticket_already_exists_with_one_comment():
     add_api_responses(comments=api_responses.two_comments)
     # assume local ticket has already been sync'd along with a single comment
-    local_ticket = mommy.make('zengo.Ticket', zendesk_id=1)
+    local_ticket = mommy.make("zengo.Ticket", zendesk_id=1)
     remote_ticket = service.ZengoService().client.tickets(id=1)
     remote_comments = list(
         service.ZengoService().client.tickets.comments(remote_ticket.id)
     )
-    mommy.make(
-        "zengo.Comment",
-        zendesk_id=remote_comments[0].id,
-        ticket=local_ticket,
-    )
+    mommy.make("zengo.Comment", zendesk_id=remote_comments[0].id, ticket=local_ticket)
 
     assert local_ticket.comments.count() == 1
 
@@ -926,3 +930,116 @@ def test_sync_ticket_already_exists_with_one_comment():
     assert local.body == remote.body
     assert local.public == remote.public
     assert local.created_at == dateutil.parser.parse(remote.created_at)
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_ticket_with_attachments():
+    add_api_responses(comments=api_responses.one_comment_with_attachments)
+
+    local_ticket, created = service.ZengoService().sync_ticket_id(1)
+
+    local_comments = local_ticket.comments.all()
+    assert local_comments.count() == 2
+
+    # there should be three attachments on the first comment
+    assert local_comments[0].attachments.count() == 3
+    # and only one on the second
+    assert local_comments[1].attachments.count() == 1
+
+    # first attachment is an inline image from the Zendesk webapp
+    local = local_comments[0].attachments.all()[0]
+
+    assert local.zendesk_id == 365674118331
+    assert local.file_name == "IMG_20190101_001154.jpg"
+    assert (
+        local.content_url
+        == "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg"
+    )  # noqa
+    assert local.content_type == "image/jpeg"
+    assert local.size == 2599824
+    assert local.width == 4032
+    assert local.height == 3024
+    assert local.inline
+    assert local.photos.count() == 1
+    photo = local.photos.first()
+    assert photo.zendesk_id == 365674118571
+    assert photo.file_name == "IMG_20190101_001154_thumb.jpg"
+    assert (
+        photo.content_url
+        == "https://example.zendesk.com/attachments/token/MFe8s8o4hbPI6suwHBdkvMWgV/?name=IMG_20190101_001154_thumb.jpg"
+    )  # noqa
+    assert photo.content_type == "image/jpeg"
+    assert photo.size == 2694
+    assert photo.width == 80
+    assert photo.height == 60
+
+    # second attachment is an image but not inline
+    local = local_comments[0].attachments.all()[1]
+    assert local.zendesk_id == 365692390412
+    assert local.file_name == "download.jpg"
+    assert (
+        local.content_url
+        == "https://example.zendesk.com/attachments/token/JzYm4m7TNc3ZXlbNhgZDC2ugs/?name=download.jpg"
+    )  # noqa
+    assert local.content_type == "image/jpeg"
+    assert local.size == 6339
+    assert local.width == 242
+    assert local.height == 208
+    assert not local.inline
+    assert local.photos.count() == 1
+    photo = local.photos.first()
+    assert photo.zendesk_id == 365692390492
+    assert photo.file_name == "download_thumb.jpg"
+    assert (
+        photo.content_url
+        == "https://example.zendesk.com/attachments/token/aNdp5xiwsW2u96U7IaZApCdk5/?name=download_thumb.jpg"
+    )  # noqa
+    assert photo.content_type == "image/jpeg"
+    assert photo.size == 1917
+    assert photo.width == 80
+    assert photo.height == 69
+
+    # third attachment is a PDF
+    local = local_comments[0].attachments.all()[2]
+    assert local.zendesk_id == 365692415672
+    assert local.file_name == "lyft-2019-02-24.pdf"
+    assert (
+        local.content_url
+        == "https://example.zendesk.com/attachments/token/2AO6OpL1pdAn6ouPrG9CpLeky/?name=lyft-2019-02-24.pdf"
+    )  # noqa
+    assert local.content_type == "application/pdf"
+    assert local.size == 622787
+    assert local.width is None
+    assert local.height is None
+    assert not local.inline
+    assert local.photos.count() == 0
+
+    # fourth attachment is an inline image that came in via email
+    # but it is not functionally different to the first attachment
+    local = local_comments[1].attachments.all()[0]
+    assert local.zendesk_id == 365692692292
+    assert local.file_name == "fuse.jpg"
+    assert (
+        local.content_url
+        == "https://example.zendesk.com/attachments/token/EcuesBNtbQm3I3FLvuDP9kpUK/?name=fuse.jpg"
+    )
+    assert local.content_type == "image/jpeg"
+    assert local.size == 48754
+    # for some reason, when sending via email, the main attachment's
+    # dimensions are not available
+    assert local.width is None
+    assert local.height is None
+    assert local.inline
+    assert local.photos.count() == 1
+    photo = local.photos.first()
+    assert photo.zendesk_id == 365674480751
+    assert photo.file_name == "fuse_thumb.jpg"
+    assert (
+        photo.content_url
+        == "https://example.zendesk.com/attachments/token/BvMqGiqQg9t1Kt8egzlmz87l4/?name=fuse_thumb.jpg"
+    )  # noqa
+    assert photo.content_type == "image/jpeg"
+    assert photo.size == 1588
+    assert photo.width == 80
+    assert photo.height == 45
