@@ -247,8 +247,8 @@ class ZengoService(object):
                 defaults=dict(
                     author=user_map[remote_comment.author],
                     body=remote_comment.body,
-                    html_body=remote_comment.body,
-                    plain_body=remote_comment.body,
+                    html_body=remote_comment.html_body,
+                    plain_body=remote_comment.plain_body,
                     public=remote_comment.public,
                     created_at=remote_comment.created_at,
                 ),
