@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.models import model_to_dict
 
+import zenpy
 from zenpy import Zenpy
 from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
@@ -211,10 +212,20 @@ class ZengoService(object):
 
         This uses `update_or_create` to avoid integrity errors, demanding that
         comments and users be sync'd in a consistent order to avoid deadlock.
+
+        Todo: only pull comments beyond those we've already got in the database
         """
 
-        # todo: only pull comments beyond those we've already got in the database
-        remote_comments = [c for c in self.client.tickets.comments(remote_zd_ticket.id)]
+        # temporary hack waiting on merge of https://github.com/facetoe/zenpy/pull/320
+        # allowing dependants of zengo to enable inclusion of inline images by
+        # forcing the install of a modified zenpy
+        kwargs = {}
+        if zenpy.__version__.endswith("lukemod"):
+            kwargs["include_inline_images"] = True
+
+        remote_comments = [
+            c for c in self.client.tickets.comments(remote_zd_ticket.id, **kwargs)
+        ]
         remote_comments.sort(key=lambda c: (c.created_at, c.id))
 
         # establish a distinct, ordered list of Zendesk users
