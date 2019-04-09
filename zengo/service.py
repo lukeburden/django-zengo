@@ -250,8 +250,10 @@ class ZengoService(object):
                 updated_at=remote_zd_ticket.updated_at,
             ),
         )
-        # and now update or create the comments
+        # and now update or create the comments - baring in mind some might be type `VoiceComment`
+        # https://developer.zendesk.com/rest_api/docs/support/ticket_audits#voice-comment-event
         for remote_comment in remote_comments:
+
             local_comment, _created = models.Comment.objects.update_or_create(
                 zendesk_id=remote_comment.id,
                 ticket=local_ticket,
@@ -259,7 +261,8 @@ class ZengoService(object):
                     author=user_map[remote_comment.author],
                     body=remote_comment.body,
                     html_body=remote_comment.html_body,
-                    plain_body=remote_comment.plain_body,
+                    # VoiceComments have no `plain_body` content
+                    plain_body=getattr(remote_comment, "plain_body", None),
                     public=remote_comment.public,
                     created_at=remote_comment.created_at,
                 ),

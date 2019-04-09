@@ -371,6 +371,73 @@ two_comments = json.loads(
 """
 )
 
+voice_comment = json.loads(
+    r"""{
+  "comments": [
+    {
+      "id": 587388696111,
+      "type": "VoiceComment",
+      "public": false,
+      "data": {
+        "from": "+14151111234",
+        "to": "+17181111234",
+        "recording_url": "https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording",
+        "call_id": 1,
+        "call_duration": 75,
+        "answered_by_id": 2,
+        "started_at": "2019-04-01T00:36:55Z",
+        "location": "",
+        "author_id": 1,
+        "public": false,
+        "brand_id": 1,
+        "via_id": 35,
+        "answered_by_name": "Some person",
+        "transcription_status": "completed"
+      },
+      "formatted_from": "+1 (415) 111-1234",
+      "formatted_to": "+1 (718) 111-1234",
+      "transcription_visible": false,
+      "author_id": 2,
+      "body": "Outbound call to +1 (718) 111-1234\nCall Details:\n\nCall from: +1 (415) 111-1234\nCall to: +1 (718) 111-1234\nTime of call: 2019-04-01 00:36:55 UTC\nCalled by: Some person\nLength of phone call: 1 minute, 15 seconds\nListen to the recording: https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording\n",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">\n<p dir=\"auto\">Outbound call to +1 (718) 111-1234<br>\nCall Details:</p>\n<p dir=\"auto\">Call from: +1 (415) 111-1234<br>\nCall to: +1 (718) 111-1234<br>\nTime of call: 2019-04-01 00:36:55 UTC<br>\nCalled by: Some person<br>\nLength of phone call: 1 minute, 15 seconds<br>\nListen to the recording: <a href=\"https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording\" rel=\"noreferrer\">https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording</a></p>\n</div>",
+      "trusted": true,
+      "attachments": [],
+      "created_at": "2019-04-01T00:38:12Z",
+      "via": {
+        "channel": "voice",
+        "source": {
+          "rel": "outbound",
+          "from": {
+            "formatted_phone": "+1 (415) 111-1234",
+            "phone": "+14151111234",
+            "name": "Example"
+          },
+          "to": {
+            "formatted_phone": "+1 (718) 111-1234",
+            "phone": "+17181111234",
+            "name": "Some recipient"
+          }
+        }
+      },
+      "metadata": {
+        "system": {
+          "client": "",
+          "ip_address": "",
+          "location": "New York, NY, United States",
+          "latitude": 40.792100000000005,
+          "longitude": -73.9439
+        },
+        "custom": {}
+      }
+    }
+  ],
+  "next_page": null,
+  "previous_page": null,
+  "count": 1
+}"""
+)
+
+
 one_comment_with_attachments = json.loads(
     r"""{
   "comments": [

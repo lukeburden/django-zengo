@@ -1043,3 +1043,18 @@ def test_sync_ticket_with_attachments():
     assert photo.size == 1588
     assert photo.width == 80
     assert photo.height == 45
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_ticket_with_voice_comment():
+    # ensure our sync doesn't trip up on a VoiceComment
+    add_api_responses(comments=api_responses.voice_comment)
+
+    local_ticket, created = service.ZengoService().sync_ticket_id(1)
+
+    local_comments = local_ticket.comments.all()
+    assert local_comments.count() == 1
+
+    # no plain_body is available
+    assert local_comments[0].plain_body is None
