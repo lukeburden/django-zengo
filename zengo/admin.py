@@ -44,12 +44,24 @@ class TicketAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ["zendesk_id", "ticket_id", "author", "body", "public", "created_at"]
+    list_display = [
+        "zendesk_id",
+        "ticket_id",
+        "author",
+        "get_body",
+        "public",
+        "created_at",
+    ]
     list_filter = ["public", "created_at"]
     # for Django <2.1
     raw_id_fields = ["ticket", "author"]
     # for Django >=2.1
     autocomplete_fields = ["ticket", "author"]
+
+    def get_body(self, instance):
+        return instance.plain_body or instance.body
+
+    get_body.short_description = "Body"
 
     def get_queryset(self, request):
         return models.Comment.objects.all().select_related("ticket", "author")
