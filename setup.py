@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 install_requires = [
     "django>=1.11,<3",
-    "zenpy>=2,<3",
+    "zenpy>=2.0.11,<3",
     "django-konst>=1,<2",
 ]
 

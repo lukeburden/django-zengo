@@ -216,12 +216,7 @@ class ZengoService(object):
         Todo: only pull comments beyond those we've already got in the database
         """
 
-        # temporary hack waiting on merge of https://github.com/facetoe/zenpy/pull/320
-        # allowing dependants of zengo to enable inclusion of inline images by
-        # forcing the install of a modified zenpy
-        kwargs = {}
-        if zenpy.__version__.endswith("lukemod"):
-            kwargs["include_inline_images"] = True
+        kwargs = dict(include_inline_images=True)
 
         remote_comments = [
             c for c in self.client.tickets.comments(remote_zd_ticket.id, **kwargs)
