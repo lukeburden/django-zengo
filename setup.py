@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 
 name = "django-zengo"
-description = "Integrate Zendesk and your Django app"
+description = "Integrate Zendesk Support and your Django app"
 author = "Luke Burden"
 author_email = "lukeburden@gmail.com"
 url = "https://github.com/lukeburden/django-zengo"
@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 install_requires = [
     "django>=1.11,<3",
-    "zenpy>=2,<3",
+    "zenpy>=2.0.11,<3",
     "django-konst>=1,<2",
 ]
 
@@ -30,7 +30,7 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.0.6",
+    version="1.1.0",
     license="MIT",
     url=url,
     packages=find_packages(exclude=["tests", "testproj"]),

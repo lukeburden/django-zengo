@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 
 
@@ -369,12 +371,251 @@ two_comments = json.loads(
 """
 )
 
+voice_comment = json.loads(
+    r"""{
+  "comments": [
+    {
+      "id": 587388696111,
+      "type": "VoiceComment",
+      "public": false,
+      "data": {
+        "from": "+14151111234",
+        "to": "+17181111234",
+        "recording_url": "https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording",
+        "call_id": 1,
+        "call_duration": 75,
+        "answered_by_id": 2,
+        "started_at": "2019-04-01T00:36:55Z",
+        "location": "",
+        "author_id": 1,
+        "public": false,
+        "brand_id": 1,
+        "via_id": 35,
+        "answered_by_name": "Some person",
+        "transcription_status": "completed"
+      },
+      "formatted_from": "+1 (415) 111-1234",
+      "formatted_to": "+1 (718) 111-1234",
+      "transcription_visible": false,
+      "author_id": 2,
+      "body": "Outbound call to +1 (718) 111-1234\nCall Details:\n\nCall from: +1 (415) 111-1234\nCall to: +1 (718) 111-1234\nTime of call: 2019-04-01 00:36:55 UTC\nCalled by: Some person\nLength of phone call: 1 minute, 15 seconds\nListen to the recording: https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording\n",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">\n<p dir=\"auto\">Outbound call to +1 (718) 111-1234<br>\nCall Details:</p>\n<p dir=\"auto\">Call from: +1 (415) 111-1234<br>\nCall to: +1 (718) 111-1234<br>\nTime of call: 2019-04-01 00:36:55 UTC<br>\nCalled by: Some person<br>\nLength of phone call: 1 minute, 15 seconds<br>\nListen to the recording: <a href=\"https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording\" rel=\"noreferrer\">https://example.zendesk.com/api/v2/channels/voice/calls/1/twilio/recording</a></p>\n</div>",
+      "trusted": true,
+      "attachments": [],
+      "created_at": "2019-04-01T00:38:12Z",
+      "via": {
+        "channel": "voice",
+        "source": {
+          "rel": "outbound",
+          "from": {
+            "formatted_phone": "+1 (415) 111-1234",
+            "phone": "+14151111234",
+            "name": "Example"
+          },
+          "to": {
+            "formatted_phone": "+1 (718) 111-1234",
+            "phone": "+17181111234",
+            "name": "Some recipient"
+          }
+        }
+      },
+      "metadata": {
+        "system": {
+          "client": "",
+          "ip_address": "",
+          "location": "New York, NY, United States",
+          "latitude": 40.792100000000005,
+          "longitude": -73.9439
+        },
+        "custom": {}
+      }
+    }
+  ],
+  "next_page": null,
+  "previous_page": null,
+  "count": 1
+}"""
+)
+
+
+one_comment_with_attachments = json.loads(
+    r"""{
+  "comments": [
+    {
+      "id": 583514996211,
+      "type": "Comment",
+      "author_id": 1,
+      "body": "Hi there Luke.​\n\nHere is an inline image.\n\n ![](https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg)​\n\nWowsers, there is also an image and another file attached to this ticket.",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Hi there Luke.​<br><br>Here is an inline image.<br><br><img src=\"https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg\" data-original-height=\"3024\" data-original-width=\"4032\" style=\"height: auto; width: 4032px\">​<br><br>Wowsers, there is also an image and another file attached to this ticket.<br><br><br>\n</div>",
+      "plain_body": "Hi there Luke.​\n\nHere is an inline image.\n\n​\n\nWowsers, there is also an image and another file attached to this ticket.",
+      "public": true,
+      "attachments": [
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/365674118331.json",
+          "id": 365674118331,
+          "file_name": "IMG_20190101_001154.jpg",
+          "content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg",
+          "mapped_content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg",
+          "content_type": "image/jpeg",
+          "size": 2599824,
+          "width": 4032,
+          "height": 3024,
+          "inline": true,
+          "thumbnails": [
+            {
+              "url": "https://example.zendesk.com/api/v2/attachments/365674118571.json",
+              "id": 365674118571,
+              "file_name": "IMG_20190101_001154_thumb.jpg",
+              "content_url": "https://example.zendesk.com/attachments/token/MFe8s8o4hbPI6suwHBdkvMWgV/?name=IMG_20190101_001154_thumb.jpg",
+              "mapped_content_url": "https://example.zendesk.com/attachments/token/MFe8s8o4hbPI6suwHBdkvMWgV/?name=IMG_20190101_001154_thumb.jpg",
+              "content_type": "image/jpeg",
+              "size": 2694,
+              "width": 80,
+              "height": 60,
+              "inline": false
+            }
+          ]
+        },
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/365692390412.json",
+          "id": 365692390412,
+          "file_name": "download.jpg",
+          "content_url": "https://example.zendesk.com/attachments/token/JzYm4m7TNc3ZXlbNhgZDC2ugs/?name=download.jpg",
+          "mapped_content_url": "https://example.zendesk.com/attachments/token/JzYm4m7TNc3ZXlbNhgZDC2ugs/?name=download.jpg",
+          "content_type": "image/jpeg",
+          "size": 6339,
+          "width": 242,
+          "height": 208,
+          "inline": false,
+          "thumbnails": [
+            {
+              "url": "https://example.zendesk.com/api/v2/attachments/365692390492.json",
+              "id": 365692390492,
+              "file_name": "download_thumb.jpg",
+              "content_url": "https://example.zendesk.com/attachments/token/aNdp5xiwsW2u96U7IaZApCdk5/?name=download_thumb.jpg",
+              "mapped_content_url": "https://example.zendesk.com/attachments/token/aNdp5xiwsW2u96U7IaZApCdk5/?name=download_thumb.jpg",
+              "content_type": "image/jpeg",
+              "size": 1917,
+              "width": 80,
+              "height": 69,
+              "inline": false
+            }
+          ]
+        },
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/365692415672.json",
+          "id": 365692415672,
+          "file_name": "lyft-2019-02-24.pdf",
+          "content_url": "https://example.zendesk.com/attachments/token/2AO6OpL1pdAn6ouPrG9CpLeky/?name=lyft-2019-02-24.pdf",
+          "mapped_content_url": "https://example.zendesk.com/attachments/token/2AO6OpL1pdAn6ouPrG9CpLeky/?name=lyft-2019-02-24.pdf",
+          "content_type": "application/pdf",
+          "size": 622787,
+          "width": null,
+          "height": null,
+          "inline": false,
+          "thumbnails": []
+        }
+      ],
+      "audit_id": 583514996171,
+      "via": {
+        "channel": "web",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2019-03-27T18:31:54Z",
+      "metadata": {
+        "system": {
+          "client": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36",
+          "ip_address": "24.84.172.37",
+          "location": "Vancouver, BC, Canada",
+          "latitude": 49.25999999999999,
+          "longitude": -123.0398
+        },
+        "custom": {}
+      }
+    },
+    {
+      "id": 584081472972,
+      "type": "Comment",
+      "author_id": 2,
+      "body": "That's great, Zendesk. Here is an image in a response via EMAIL:\n\n\n ![fuse.jpg](https://example.zendesk.com/attachments/token/EcuesBNtbQm3I3FLvuDP9kpUK/?name=fuse.jpg)\n\n\n\nHope that helps.",
+      "html_body": "<div class=\"zd-comment zd-comment-pre-styled\" dir=\"auto\">\n<div dir=\"ltr\">That's great, Zendesk. Here is an image in a response via EMAIL:<br><br><div>\n<img src=\"https://example.zendesk.com/attachments/token/EcuesBNtbQm3I3FLvuDP9kpUK/?name=fuse.jpg\" alt=\"fuse.jpg\" width=\"538\" height=\"303\"><br>\n</div>\n<div><br></div>\n<div>Hope that helps.</div>\n</div>\n<br>\n</div>",
+      "plain_body": "That's great, Zendesk. Here is an image in a response via EMAIL:\n\n \n\n\n \n \n \n Hope that helps.",
+      "public": true,
+      "attachments": [
+        {
+          "url": "https://example.zendesk.com/api/v2/attachments/365692692292.json",
+          "id": 365692692292,
+          "file_name": "fuse.jpg",
+          "content_url": "https://example.zendesk.com/attachments/token/EcuesBNtbQm3I3FLvuDP9kpUK/?name=fuse.jpg",
+          "mapped_content_url": "https://example.zendesk.com/attachments/token/EcuesBNtbQm3I3FLvuDP9kpUK/?name=fuse.jpg",
+          "content_type": "image/jpeg",
+          "size": 48754,
+          "width": null,
+          "height": null,
+          "inline": true,
+          "thumbnails": [
+            {
+              "url": "https://example.zendesk.com/api/v2/attachments/365674480751.json",
+              "id": 365674480751,
+              "file_name": "fuse_thumb.jpg",
+              "content_url": "https://example.zendesk.com/attachments/token/BvMqGiqQg9t1Kt8egzlmz87l4/?name=fuse_thumb.jpg",
+              "mapped_content_url": "https://example.zendesk.com/attachments/token/BvMqGiqQg9t1Kt8egzlmz87l4/?name=fuse_thumb.jpg",
+              "content_type": "image/jpeg",
+              "size": 1588,
+              "width": 80,
+              "height": 45,
+              "inline": false
+            }
+          ]
+        }
+      ],
+      "audit_id": 584081472852,
+      "via": {
+        "channel": "email",
+        "source": {
+          "from": {
+            "address": "monica@example.com",
+            "name": "Monica",
+            "original_recipients": [
+              "monica@example.com",
+              "support+id1@example.zendesk.com"
+            ]
+          },
+          "to": {
+            "name": "Example Org",
+            "address": null
+          },
+          "rel": null
+        }
+      },
+      "created_at": "2019-03-27T18:42:53Z",
+      "metadata": {
+        "system": {
+          "message_id": "<CALzA2rnDc9AY8btg3yHqNt=j2QT1jKvehZO=P7e3fGWvM=CeHg@mail.gmail.com>",
+          "raw_email_identifier": "2277328/9aa60a41-3a16-49c1-b126-92e4524fd7d3.eml",
+          "json_email_identifier": "2277328/9aa60a41-3a16-49c1-b126-92e4524fd7d3.json"
+        },
+        "custom": {},
+        "suspension_type_id": null
+      }
+    }
+  ],
+  "next_page": null,
+  "previous_page": null,
+  "count": 2
+}
+  """
+)
+
 search_one_result = json.loads(
     r"""{
   "results": [
     {
       "id": 1,
-
       "name": "Monica",
       "email": "monica@example.com",
       "created_at": "2019-01-10T22:06:54Z",
@@ -447,11 +688,11 @@ search_one_result = json.loads(
 )
 
 search_no_results = json.loads(
-  r"""{"results":[],"facets":null,"next_page":null,"previous_page":null,"count":0}"""
+    r"""{"results":[],"facets":null,"next_page":null,"previous_page":null,"count":0}"""
 )
 
 create_user_result = json.loads(
-  r"""{
+    r"""{
   "user": {
       "id": 1,
       "name": "Monica",
@@ -521,7 +762,7 @@ create_user_result = json.loads(
 
 
 create_user_dupe = json.loads(
-  """{
+    """{
   "error": "RecordInvalid",
   "description": "Record validation errors",
   "details": {
@@ -540,7 +781,7 @@ update_user_ok = create_user_result
 
 
 user_identities = json.loads(
-  """{
+    """{
   "identities": [
     {
       "url": "https://example.zendesk.com/api/v2/users/1/identities/1.json",
@@ -575,6 +816,4 @@ user_identities = json.loads(
 }"""
 )
 
-identity_make_primary = json.loads(
-  """{}"""
-)
+identity_make_primary = json.loads("""{}""")
