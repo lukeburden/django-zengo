@@ -1,4 +1,4 @@
-# Ease integration of Zendesk into your Django app
+# Integrate Zendesk Support into your Django app
 
 [![](https://img.shields.io/pypi/v/django-zengo.svg)](https://pypi.python.org/pypi/django-zengo/)
 [![](https://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/django-zengo/)
