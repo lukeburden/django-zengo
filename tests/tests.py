@@ -70,6 +70,7 @@ def add_api_responses(comments=None):
     )
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_store_event_empty_body():
     processor = service.ZengoProcessor()
@@ -78,6 +79,7 @@ def test_processor_store_event_empty_body():
     assert exc_info.value.message == strings.data_malformed
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_store_event_no_ticket_id():
     processor = service.ZengoProcessor()
@@ -86,6 +88,7 @@ def test_processor_store_event_no_ticket_id():
     assert exc_info.value.message == strings.data_no_ticket_id
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_store_event_no_ticket_int_id():
     processor = service.ZengoProcessor()
@@ -94,6 +97,7 @@ def test_processor_store_event_no_ticket_int_id():
     assert exc_info.value.message == strings.data_no_ticket_id
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_store_event_ok():
     processor = service.ZengoProcessor()
@@ -104,6 +108,7 @@ def test_processor_store_event_ok():
     assert event.remote_ticket_id == 1
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_begin_processing_event(mocker):
     # not much to test here, just that it chains through
@@ -113,6 +118,7 @@ def test_processor_begin_processing_event(mocker):
     assert processor.process_event_and_record_errors.called
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_process_event_and_record_errors_error(mocker):
     processor = service.ZengoProcessor()
@@ -197,6 +203,7 @@ def test_processor_process_event_ticket_updated(mocker):
     )
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_get_new_comments_new_ticket(mocker):
     processor = service.ZengoProcessor()
@@ -212,6 +219,7 @@ def test_processor_get_new_comments_new_ticket(mocker):
     assert processor.get_new_comments(**update_context) == []
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_get_new_comments_new_ticket_plus_comment(mocker):
     processor = service.ZengoProcessor()
@@ -226,6 +234,7 @@ def test_processor_get_new_comments_new_ticket_plus_comment(mocker):
     assert processor.get_new_comments(**update_context) == [comment]
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_get_new_comments_existing_ticket_plus_comment(mocker):
     processor = service.ZengoProcessor()
@@ -241,6 +250,7 @@ def test_processor_get_new_comments_existing_ticket_plus_comment(mocker):
     assert processor.get_new_comments(**update_context) == [another_comment]
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_get_updated_fields_no_changes(mocker):
     processor = service.ZengoProcessor()
@@ -254,6 +264,7 @@ def test_processor_get_updated_fields_no_changes(mocker):
     assert processor.get_updated_fields(**update_context) == {}
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_processor_get_updated_fields_several_fields_changed(mocker):
     processor = service.ZengoProcessor()
@@ -282,6 +293,7 @@ def test_processor_get_updated_fields_several_fields_changed(mocker):
 # test WebhookView
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_webhook_view_missing_secret(client):
     assert Event.objects.count() == 0
@@ -297,6 +309,7 @@ def test_webhook_view_missing_secret(client):
     assert Ticket.objects.count() == 0
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_webhook_view_invalid_secret(client):
     assert Event.objects.count() == 0
@@ -312,6 +325,7 @@ def test_webhook_view_invalid_secret(client):
     assert Ticket.objects.count() == 0
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_webhook_view_no_body(client):
     assert Event.objects.count() == 0
@@ -327,6 +341,7 @@ def test_webhook_view_no_body(client):
     assert Ticket.objects.count() == 0
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_webhook_view_invalid_body(client):
     assert Event.objects.count() == 0
@@ -367,18 +382,21 @@ def test_webhook_view_ok(client):
 # test service methods
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_get_local_user_name():
     user = mommy.make("auth.User")
     assert service.ZengoService().get_local_user_name(user) == user.first_name
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_get_local_user_external_id():
     user = mommy.make("auth.User")
     assert service.ZengoService().get_local_user_external_id(user) == user.id
 
 
+@responses.activate
 @pytest.mark.django_db
 def test_get_local_user_for_external_id():
     user = mommy.make("auth.User")
@@ -884,11 +902,11 @@ def test_sync_ticket_with_comments():
     local_ticket, created = service.ZengoService().sync_ticket_id(1)
     assert created
     local_comments = local_ticket.comments.all()
-    assert len(local_comments) == 2
+    assert local_comments.count() == 2
 
     remote_comments = service.ZengoService().client.tickets.comments(1)
     remote = list(remote_comments)[0]
-    local = local_comments[0]
+    local = local_comments.first()
 
     assert local.zendesk_id == remote.id
     assert local.ticket == local_ticket
@@ -935,7 +953,7 @@ def test_sync_ticket_already_exists_with_one_comment():
 @responses.activate
 @pytest.mark.django_db
 def test_sync_ticket_with_attachments():
-    add_api_responses(comments=api_responses.one_comment_with_attachments)
+    add_api_responses(comments=api_responses.two_comments_with_attachments)
 
     local_ticket, created = service.ZengoService().sync_ticket_id(1)
 

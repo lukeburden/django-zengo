@@ -437,7 +437,7 @@ voice_comment = json.loads(
 }"""
 )
 
-one_comment_with_attachments = json.loads(
+two_comments_with_attachments = json.loads(
     r"""{
   "comments": [
     {
