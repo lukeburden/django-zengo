@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from functools import partial
 import json
 
 from django.contrib.auth import get_user_model
+from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
+
+
+# As the source is always Zendesk, we are permissive regarding length of URLs
+TextURLField = partial(models.TextField, validators=[URLValidator()])  # noqa
 
 
 @python_2_unicode_compatible
@@ -64,7 +70,7 @@ class Ticket(models.Model):
     zendesk_id = models.BigIntegerField(unique=True)
     requester = models.ForeignKey(ZendeskUser, on_delete=models.CASCADE)
     subject = models.TextField(null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
+    url = TextURLField(null=True, blank=True)
     states = Constants(
         Constant(new="new"),
         Constant(open="open"),
@@ -115,7 +121,7 @@ class Attachment(models.Model):
 
     zendesk_id = models.BigIntegerField(unique=True)
     file_name = models.TextField()
-    content_url = models.URLField()
+    content_url = TextURLField()
     content_type = models.TextField()
     size = models.BigIntegerField()
 
@@ -142,7 +148,7 @@ class Photo(models.Model):
 
     zendesk_id = models.BigIntegerField(unique=True)
     file_name = models.TextField()
-    content_url = models.URLField()
+    content_url = TextURLField()
     content_type = models.TextField()
     size = models.BigIntegerField()
     width = models.PositiveIntegerField(null=True, blank=True)

@@ -951,10 +951,10 @@ def test_sync_ticket_with_attachments():
     local = local_comments[0].attachments.all()[0]
 
     assert local.zendesk_id == 365674118331
-    assert local.file_name == "IMG_20190101_001154.jpg"
+    assert local.file_name == "IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg"
     assert (
         local.content_url
-        == "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg"
+        == "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg"
     )  # noqa
     assert local.content_type == "image/jpeg"
     assert local.size == 2599824

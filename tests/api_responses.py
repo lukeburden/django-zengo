@@ -437,7 +437,6 @@ voice_comment = json.loads(
 }"""
 )
 
-
 one_comment_with_attachments = json.loads(
     r"""{
   "comments": [
@@ -445,17 +444,17 @@ one_comment_with_attachments = json.loads(
       "id": 583514996211,
       "type": "Comment",
       "author_id": 1,
-      "body": "Hi there Luke.​\n\nHere is an inline image.\n\n ![](https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg)​\n\nWowsers, there is also an image and another file attached to this ticket.",
-      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Hi there Luke.​<br><br>Here is an inline image.<br><br><img src=\"https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg\" data-original-height=\"3024\" data-original-width=\"4032\" style=\"height: auto; width: 4032px\">​<br><br>Wowsers, there is also an image and another file attached to this ticket.<br><br><br>\n</div>",
+      "body": "Hi there Luke.​\n\nHere is an inline image.\n\n ![](https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg)​\n\nWowsers, there is also an image and another file attached to this ticket.",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Hi there Luke.​<br><br>Here is an inline image.<br><br><img src=\"https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg\" data-original-height=\"3024\" data-original-width=\"4032\" style=\"height: auto; width: 4032px\">​<br><br>Wowsers, there is also an image and another file attached to this ticket.<br><br><br>\n</div>",
       "plain_body": "Hi there Luke.​\n\nHere is an inline image.\n\n​\n\nWowsers, there is also an image and another file attached to this ticket.",
       "public": true,
       "attachments": [
         {
           "url": "https://example.zendesk.com/api/v2/attachments/365674118331.json",
           "id": 365674118331,
-          "file_name": "IMG_20190101_001154.jpg",
-          "content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg",
-          "mapped_content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154.jpg",
+          "file_name": "IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg",
+          "content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg",
+          "mapped_content_url": "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg",
           "content_type": "image/jpeg",
           "size": 2599824,
           "width": 4032,
