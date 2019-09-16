@@ -1107,3 +1107,7 @@ def test_get_special_zendesk_user():
     assert user.zendesk_id == -1
     assert user.name == "Zendesk"
     assert user.role.admin
+
+    # and it will only be created once
+    user_2 = service.ZengoService().get_special_zendesk_user()
+    assert user.id == user_2.id
