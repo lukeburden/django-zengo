@@ -18,7 +18,6 @@ common: &common
         name: upload coverage report
         command: |
           if [[ "$UPLOAD_COVERAGE" != 0 ]]; then
-              coverage xml
               bash <(curl -s https://codecov.io/bash)
           fi
     - save_cache:
