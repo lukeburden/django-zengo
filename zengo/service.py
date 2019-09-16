@@ -12,8 +12,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.models import model_to_dict
+from django.utils import timezone
 
-import zenpy
 from zenpy import Zenpy
 from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
@@ -133,6 +133,22 @@ class ZengoService(object):
         # we create a remote user in Zendesk for this local user
         return self.create_remote_zd_user_for_local_user(local_user), True
 
+    def get_special_zendesk_user(self):
+        """
+        Return a ZendeskUser instance representing the special Zendesk user that
+        automations can add use to add comments.
+        """
+        instance, created = models.ZendeskUser.objects.get_or_create(
+            zendesk_id=-1,
+            defaults=dict(
+                name="Zendesk",
+                active=True,
+                role=models.ZendeskUser.roles.admin,
+                created_at=timezone.now(),
+            ),
+        )
+        return instance
+
     def update_remote_zd_user_for_local_user(self, local_user, remote_zd_user):
         """
         Compare the User and ZendeskUser instances and determine whether we
@@ -221,10 +237,14 @@ class ZengoService(object):
         remote_comments = [
             c for c in self.client.tickets.comments(remote_zd_ticket.id, **kwargs)
         ]
+
         remote_comments.sort(key=lambda c: (c.created_at, c.id))
 
         # establish a distinct, ordered list of Zendesk users
-        users = set([remote_zd_ticket.requester] + [c.author for c in remote_comments])
+        users = set(
+            [remote_zd_ticket.requester]
+            + [c.author for c in remote_comments if c.author_id != -1]
+        )
         users = list(users)
         users.sort(key=lambda u: u.id)
 
@@ -248,12 +268,18 @@ class ZengoService(object):
         # and now update or create the comments - baring in mind some might be type `VoiceComment`
         # https://developer.zendesk.com/rest_api/docs/support/ticket_audits#voice-comment-event
         for remote_comment in remote_comments:
+            # if we know Zendesk created this comment as part of an automation or
+            # merge, link it to the Zendesk user (skipping any zenpy/network hits)
+            if remote_comment.author_id == -1:
+                author = self.get_special_zendesk_user()
+            else:
+                author = user_map[remote_comment.author]
 
             local_comment, _created = models.Comment.objects.update_or_create(
                 zendesk_id=remote_comment.id,
                 ticket=local_ticket,
                 defaults=dict(
-                    author=user_map[remote_comment.author],
+                    author=author,
                     body=remote_comment.body,
                     html_body=remote_comment.html_body,
                     # VoiceComments have no `plain_body` content
