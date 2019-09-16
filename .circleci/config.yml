@@ -17,7 +17,7 @@ common: &common
     - run:
         name: upload coverage report
         command: |
-          ls
+          ls -la
           pwd
           if [[ "$UPLOAD_COVERAGE" != 0 ]]; then
               #PATH=$HOME/.local/bin:$PATH
