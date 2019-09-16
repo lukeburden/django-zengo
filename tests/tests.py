@@ -969,7 +969,10 @@ def test_sync_ticket_with_attachments():
     local = local_comments[0].attachments.all()[0]
 
     assert local.zendesk_id == 365674118331
-    assert local.file_name == "IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg"
+    assert (
+        local.file_name
+        == "IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg"
+    )
     assert (
         local.content_url
         == "https://example.zendesk.com/attachments/token/jFGBxOznWMG8lWRXUt0DAi1UQ/?name=IMG_20190101_001154-some-really-ridiculously-long-file-name-how-could-people-bring-themselves-to-be-this-verbose-but-really-how-and-what-is-it-they-hoped-to-achieve-is-it-world-domination-or-an-abomination-foos.jpg"
@@ -1076,3 +1079,35 @@ def test_sync_ticket_with_voice_comment():
 
     # no plain_body is available
     assert local_comments[0].plain_body is None
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_sync_ticket_with_comment_with_no_author():
+    # when a comment on a ticket has an author value of `-1`, this is
+    # Zendesk adding a comment usually to do with some ticket merging
+    # As these messages have mostly low-value to users, we just skip
+    # them for now.
+    add_api_responses(comments=api_responses.comment_with_no_author)
+
+    local_ticket, created = service.ZengoService().sync_ticket_id(1)
+
+    local_comments = local_ticket.comments.all()
+    assert local_comments.count() == 3
+    assert local_comments[0].author.zendesk_id == 1
+    assert local_comments[1].author.zendesk_id == -1
+    assert not local_comments[1].public
+    assert local_comments[2].author.zendesk_id == 2
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_get_special_zendesk_user():
+    user = service.ZengoService().get_special_zendesk_user()
+    assert user.zendesk_id == -1
+    assert user.name == "Zendesk"
+    assert user.role.admin
+
+    # and it will only be created once
+    user_2 = service.ZengoService().get_special_zendesk_user()
+    assert user.id == user_2.id

@@ -30,7 +30,7 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.2.0",
+    version="1.3.0",
     license="MIT",
     url=url,
     packages=find_packages(exclude=["tests", "testproj"]),

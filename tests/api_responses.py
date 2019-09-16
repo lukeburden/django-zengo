@@ -610,6 +610,99 @@ two_comments_with_attachments = json.loads(
   """
 )
 
+
+comment_with_no_author = json.loads(
+    r"""{
+  "comments": [
+    {
+      "id": 1,
+      "type": "Comment",
+      "author_id": 1,
+      "body": "Last message to the customer was a notification",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Last message to the customer was a notification</div>",
+      "plain_body": "Last message to the customer was a notification",
+      "public": false,
+      "attachments": [],
+      "audit_id": 1,
+      "via": {
+        "channel": "sms",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2019-08-01T19:22:21Z",
+      "metadata": {
+        "system": {
+          "client": "",
+          "ip_address": ""
+        },
+        "custom": {}
+      }
+    },
+    {
+      "id": 2,
+      "type": "Comment",
+      "author_id": -1,
+      "body": "Last message to the customer was a notification",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Last message to the customer was a notification</div>",
+      "plain_body": "Last message to the customer was a notification",
+      "public": false,
+      "attachments": [],
+      "audit_id": 2,
+      "via": {
+        "channel": "sms",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2019-08-01T19:29:10Z",
+      "metadata": {
+        "system": {
+          "client": "",
+          "ip_address": ""
+        },
+        "custom": {}
+      }
+    },
+    {
+      "id": 3,
+      "type": "Comment",
+      "author_id": 2,
+      "body": "Ho hum",
+      "html_body": "<div class=\"zd-comment\" dir=\"auto\">Ho hum</div>",
+      "plain_body": "Ho hum",
+      "public": false,
+      "attachments": [],
+      "audit_id": 3,
+      "via": {
+        "channel": "sms",
+        "source": {
+          "from": {},
+          "to": {},
+          "rel": null
+        }
+      },
+      "created_at": "2019-08-01T19:30:29Z",
+      "metadata": {
+        "system": {
+          "client": "",
+          "ip_address": ""
+        },
+        "custom": {}
+      }
+    }
+  ],
+  "next_page": null,
+  "previous_page": null,
+  "count": 3
+}"""
+)
+
+
 search_one_result = json.loads(
     r"""{
   "results": [
