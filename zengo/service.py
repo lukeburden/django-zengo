@@ -119,9 +119,10 @@ class ZengoService(object):
             print(a.response.json())
             details = a.response.json()["details"]
             if any([d[0]["error"] == "DuplicateValue" for d in details.values()]):
-                remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
-                    local_user
-                )
+                (
+                    remote_zd_user,
+                    is_definite_match,
+                ) = self.get_remote_zd_user_for_local_user(local_user)
             else:
                 raise
         return remote_zd_user
@@ -207,6 +208,7 @@ class ZengoService(object):
             defaults=dict(
                 # attempt to resolve the local user if possible
                 user=self.get_local_user_for_external_id(remote_zd_user.external_id),
+                alias=remote_zd_user.alias,
                 email=remote_zd_user.email,
                 created_at=remote_zd_user.created_at,
                 name=remote_zd_user.name,

@@ -788,6 +788,7 @@ create_user_result = json.loads(
   "user": {
       "id": 1,
       "name": "Monica",
+      "alias": "Billy",
       "email": "monica@example.com",
       "created_at": "2019-01-10T22:06:54Z",
       "updated_at": "2019-01-11T00:01:37Z",

@@ -849,6 +849,7 @@ def test_sync_user():
 
     assert local_zd_user.zendesk_id == remote.id
     assert local_zd_user.email == remote.email
+    assert local_zd_user.alias == remote.alias
     # user should be found and linked
     assert local_zd_user.user == user
     assert local_zd_user.created_at == remote.created_at
