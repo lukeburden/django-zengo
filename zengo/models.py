@@ -36,6 +36,7 @@ class ZendeskUser(models.Model):
     zendesk_id = models.BigIntegerField(unique=True)
 
     name = models.TextField(null=True, blank=True)
+    alias = models.TextField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     active = models.BooleanField(default=True)
     # we store all of the photo details from the API as JSON encoded text
