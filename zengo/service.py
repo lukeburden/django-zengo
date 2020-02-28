@@ -261,6 +261,9 @@ class ZengoService(object):
                 subject=remote_zd_ticket.subject,
                 url=remote_zd_ticket.url,
                 status=models.Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
+                priority=models.Ticket.priorities.by_id.get(
+                    remote_zd_ticket.priority.lower()
+                ),
                 custom_fields=json.dumps(remote_zd_ticket.custom_fields),
                 tags=json.dumps(remote_zd_ticket.tags),
                 created_at=remote_zd_ticket.created_at,

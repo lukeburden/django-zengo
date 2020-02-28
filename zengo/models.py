@@ -81,6 +81,13 @@ class Ticket(models.Model):
         Constant(closed="closed"),
     )
     status = ConstantChoiceCharField(constants=states, max_length=8)
+    priorities = Constants(
+        Constant(urgent="urgent"),
+        Constant(high="high"),
+        Constant(normal="normal"),
+        Constant(low="low"),
+    )
+    priority = ConstantChoiceCharField(constants=states, max_length=8)
     # custom fields and tags are stored here, relatively unprocessed and
     # are None, or parseable JSON
     custom_fields = models.TextField(null=True, blank=True)
