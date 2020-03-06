@@ -16,12 +16,10 @@ class Migration(migrations.Migration):
             name="priority",
             field=konst.models.fields.ConstantChoiceCharField(
                 choices=[
-                    ("new", "new"),
-                    ("open", "open"),
-                    ("pending", "pending"),
-                    ("hold", "hold"),
-                    ("solved", "solved"),
-                    ("closed", "closed"),
+                    ("urgent", "urgent"),
+                    ("high", "high"),
+                    ("normal", "normal"),
+                    ("low", "low"),
                 ],
                 default="low",
                 max_length=8,
