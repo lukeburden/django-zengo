@@ -873,6 +873,7 @@ def test_sync_ticket():
     assert local_ticket.subject == remote_ticket.subject
     assert local_ticket.url == remote_ticket.url
     assert local_ticket.status == remote_ticket.status
+    assert local_ticket.priority == remote_ticket.priority
     assert json.loads(local_ticket.custom_fields) == remote_ticket.custom_fields
     assert json.loads(local_ticket.tags) == remote_ticket.tags
     assert local_ticket.created_at == remote_ticket.created_at
