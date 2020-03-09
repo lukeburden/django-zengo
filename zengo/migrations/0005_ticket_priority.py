@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                     ("normal", "normal"),
                     ("low", "low"),
                 ],
-                default="low",
+                default="normal",
                 max_length=8,
             ),
             preserve_default=False,
