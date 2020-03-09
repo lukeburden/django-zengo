@@ -29,7 +29,7 @@ common: &common
         key: v3-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
 
 jobs:
-  lint:
+  checkqa:
     <<: *common
     docker:
       - image: circleci/python:3.6.1
@@ -95,7 +95,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - lint
+      - checkqa
       - py36dj22
       - py36dj30
       - py36djmaster
