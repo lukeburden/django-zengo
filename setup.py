@@ -11,9 +11,9 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "django>=1.11,<3",
+    "django>=2,<4",
     "zenpy>=2.0.11,<3",
-    "django-konst>=1,<2",
+    "django-konst>=2,<3",
 ]
 
 tests_require = [
@@ -30,7 +30,7 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.4.0",
+    version="2.0.0",
     license="MIT",
     url=url,
     packages=find_packages(exclude=["tests", "testproj"]),
@@ -41,7 +41,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Framework :: Django",
     ],

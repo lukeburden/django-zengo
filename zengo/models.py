@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
@@ -18,7 +17,6 @@ from konst.models.fields import ConstantChoiceCharField
 TextURLField = partial(models.TextField, validators=[URLValidator()])  # noqa
 
 
-@python_2_unicode_compatible
 class ZendeskUser(models.Model):
     """
     Link between a user in Zendesk and the local system.
@@ -64,7 +62,6 @@ class ZendeskUser(models.Model):
                 return j.get("content_url")
 
 
-@python_2_unicode_compatible
 class Ticket(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -101,7 +98,6 @@ class Ticket(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Comment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -122,7 +118,6 @@ class Comment(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Attachment(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -149,7 +144,6 @@ class Attachment(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Photo(models.Model):
 
     id = models.BigAutoField(primary_key=True)
@@ -173,7 +167,6 @@ class Photo(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Event(models.Model):
     """
     Persist details around a single occurrence of Zendesk hitting the webhook view.
