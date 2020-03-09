@@ -6,8 +6,8 @@ common: &common
     - checkout
     - restore_cache:
         keys:
-          - v3-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
-          - v3-deps-
+          - v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
+          - v4-deps-
     - run:
         name: install dependencies
         command: pip install --user tox
@@ -26,7 +26,7 @@ common: &common
           - ~/.cache/pip
           - ~/.local
           - ./eggs
-        key: v3-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
+        key: v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
 
 jobs:
   checkqa:
