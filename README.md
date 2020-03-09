@@ -125,21 +125,16 @@ $ brew install pyenv pyenv-virtualenv pyenv-virtualenvwrapper
 Then:
 
 ```
-pyenv install -s 2.7.15
-pyenv install -s 3.4.7
-pyenv install -s 3.5.4
-pyenv install -s 3.6.3
-pyenv virtualenv 2.7.15
-pyenv virtualenv 3.4.7
-pyenv virtualenv 3.5.4
-pyenv virtualenv 3.6.3
-pyenv global 2.7.15 3.4.7 3.5.4 3.6.3
+pyenv install -s 3.6.10
+pyenv install -s 3.7.6
+pyenv install -s 3.8.1
+pyenv virtualenv zengo 3.8.1
+pyenv shell 2.7.15 3.4.7 3.5.4 3.6.3
+pyenv shell zengo 3.6.10 3.7.6
 pip install detox
 ```
 
 To run the test suite:
-
-Make sure you are NOT inside a `virtualenv` and then:
 
 ```
 $ detox
