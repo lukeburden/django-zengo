@@ -84,7 +84,7 @@ class Ticket(models.Model):
         Constant(normal="normal"),
         Constant(low="low"),
     )
-    priority = ConstantChoiceCharField(constants=priorities, max_length=8)
+    priority = ConstantChoiceCharField(constants=priorities, max_length=8, blank=True)
     # custom fields and tags are stored here, relatively unprocessed and
     # are None, or parseable JSON
     custom_fields = models.TextField(null=True, blank=True)
