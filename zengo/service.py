@@ -253,22 +253,29 @@ class ZengoService(object):
         # sync the users and establish a mapping to local records
         user_map = {u: self.sync_user(u) for u in users}
 
+        defaults = dict(
+            requester=user_map[remote_zd_ticket.requester],
+            subject=remote_zd_ticket.subject,
+            url=remote_zd_ticket.url,
+            status=models.Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
+            custom_fields=json.dumps(remote_zd_ticket.custom_fields),
+            tags=json.dumps(remote_zd_ticket.tags),
+            created_at=remote_zd_ticket.created_at,
+            updated_at=remote_zd_ticket.updated_at,
+        )
+
+        # In some API responses we don't get a priority, but it could be an existing ticket with
+        # priority already initialised so we don't want to overwrite the priority to the Ticket
+        # object.
+        if remote_zd_ticket.priority is not None:
+            defaults['priority'] = models.Ticket.priorities.by_id.get(
+                remote_zd_ticket.priority.lower()
+            )
+
         # update or create the ticket
         local_ticket, created = models.Ticket.objects.update_or_create(
             zendesk_id=remote_zd_ticket.id,
-            defaults=dict(
-                requester=user_map[remote_zd_ticket.requester],
-                subject=remote_zd_ticket.subject,
-                url=remote_zd_ticket.url,
-                status=models.Ticket.states.by_id.get(remote_zd_ticket.status.lower()),
-                priority=models.Ticket.priorities.by_id.get(
-                    remote_zd_ticket.priority.lower()
-                ),
-                custom_fields=json.dumps(remote_zd_ticket.custom_fields),
-                tags=json.dumps(remote_zd_ticket.tags),
-                created_at=remote_zd_ticket.created_at,
-                updated_at=remote_zd_ticket.updated_at,
-            ),
+            defaults=defaults,
         )
         # and now update or create the comments - baring in mind some might be type `VoiceComment`
         # https://developer.zendesk.com/rest_api/docs/support/ticket_audits#voice-comment-event
