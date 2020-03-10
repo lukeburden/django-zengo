@@ -268,14 +268,13 @@ class ZengoService(object):
         # priority already initialised so we don't want to overwrite the priority to the Ticket
         # object.
         if remote_zd_ticket.priority is not None:
-            defaults['priority'] = models.Ticket.priorities.by_id.get(
+            defaults["priority"] = models.Ticket.priorities.by_id.get(
                 remote_zd_ticket.priority.lower()
             )
 
         # update or create the ticket
         local_ticket, created = models.Ticket.objects.update_or_create(
-            zendesk_id=remote_zd_ticket.id,
-            defaults=defaults,
+            zendesk_id=remote_zd_ticket.id, defaults=defaults,
         )
         # and now update or create the comments - baring in mind some might be type `VoiceComment`
         # https://developer.zendesk.com/rest_api/docs/support/ticket_audits#voice-comment-event
