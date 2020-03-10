@@ -886,6 +886,33 @@ def test_sync_ticket():
 
 @responses.activate
 @pytest.mark.django_db
+def test_sync_ticket__without_priority():
+    # allow for fetching of a ticket with no comments
+    add_api_responses()
+
+    # Get a different ticket without a priority.
+    new_ticket = api_responses.new_ticket
+    del(new_ticket['ticket']['priority'])
+
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=api_url_base + "tickets/2.json",
+            match_querystring=False,
+            json=api_responses.new_ticket,
+            status=200,
+        )
+    )
+
+    remote_ticket = service.ZengoService().client.tickets(id=2)
+    local_ticket, created = service.ZengoService().sync_ticket(remote_ticket)
+
+    assert created
+    assert local_ticket.priority is None
+
+
+@responses.activate
+@pytest.mark.django_db
 def test_sync_ticket_id():
     # allow for fetching of a ticket with no comments
     add_api_responses()
