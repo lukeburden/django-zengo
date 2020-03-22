@@ -129,7 +129,6 @@ pyenv install -s 3.6.10
 pyenv install -s 3.7.6
 pyenv install -s 3.8.1
 pyenv virtualenv zengo 3.8.1
-pyenv shell 2.7.15 3.4.7 3.5.4 3.6.3
 pyenv shell zengo 3.6.10 3.7.6
 pip install detox
 ```
