@@ -37,7 +37,7 @@ class TicketAdmin(admin.ModelAdmin):
     raw_id_fields = ["requester"]
     # for Django >=2.1
     autocomplete_fields = ["requester"]
-    search_fields = ["ticket__subject", "ticket__zendesk_id"]
+    search_fields = ["subject", "zendesk_id"]
 
     def get_queryset(self, request):
         return models.Ticket.objects.all().select_related("requester")
