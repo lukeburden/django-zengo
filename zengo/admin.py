@@ -37,7 +37,7 @@ class TicketAdmin(admin.ModelAdmin):
     raw_id_fields = ["requester"]
     # for Django >=2.1
     autocomplete_fields = ["requester"]
-    search_fields = ["ticket__subject", "ticket__zendesk_id"]
+    search_fields = ["subject", "zendesk_id"]
 
     def get_queryset(self, request):
         return models.Ticket.objects.all().select_related("requester")
@@ -89,9 +89,30 @@ class PhotoAdmin(admin.ModelAdmin):
         return models.Photo.objects.all()
 
 
+class EventErrorSimpleListFilter(admin.SimpleListFilter):
+
+    title = "Processing ok?"
+    parameter_name = "processing_ok"
+
+    def lookups(self, request, model_admin):
+        return (
+            ('true', 'Yes'),
+            ('false', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'true':
+            return queryset.filter(error__isnull=True)
+
+        if self.value() == 'false':
+            return queryset.filter(error__isnull=False)
+
+        return queryset
+
+
 class EventAdmin(admin.ModelAdmin):
     list_display = ["remote_ticket_id", "processing_ok", "created_at", "updated_at"]
-    list_filter = ["created_at", "updated_at"]
+    list_filter = [EventErrorSimpleListFilter, "created_at", "updated_at"]
     # for Django <2.1
     raw_id_fields = ["ticket"]
     # for Django >=2.1
