@@ -96,15 +96,15 @@ class EventErrorSimpleListFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ('true', 'Yes'),
-            ('false', 'No'),
+            ("true", "Yes"),
+            ("false", "No"),
         )
 
     def queryset(self, request, queryset):
-        if self.value() == 'true':
+        if self.value() == "true":
             return queryset.filter(error__isnull=True)
 
-        if self.value() == 'false':
+        if self.value() == "false":
             return queryset.filter(error__isnull=False)
 
         return queryset
