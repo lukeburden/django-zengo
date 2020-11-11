@@ -10,7 +10,6 @@ import traceback
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.forms.models import model_to_dict
 from django.utils import timezone
 
@@ -245,7 +244,7 @@ class ZengoService(object):
         # establish a distinct, ordered list of Zendesk users
         users = set(
             [remote_zd_ticket.requester]
-            + [c.author for c in remote_comments if c.author_id != -1]
+            + [c.author for c in remote_comments if c.author_id != -1]  # noqa
         )
         users = list(users)
         users.sort(key=lambda u: u.id)
