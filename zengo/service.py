@@ -274,7 +274,8 @@ class ZengoService(object):
 
         # update or create the ticket
         local_ticket, created = models.Ticket.objects.update_or_create(
-            zendesk_id=remote_zd_ticket.id, defaults=defaults,
+            zendesk_id=remote_zd_ticket.id,
+            defaults=defaults,
         )
         # and now update or create the comments - baring in mind some might be type `VoiceComment`
         # https://developer.zendesk.com/rest_api/docs/support/ticket_audits#voice-comment-event
@@ -357,7 +358,7 @@ class ZengoProcessor(object):
             raise ValidationError(strings.data_no_ticket_id)
 
         event.remote_ticket_id = data["id"]
-        event.save(update_fields=("remote_ticket_id",))
+        event.save(update_fields=("remote_ticket_id", "updated_at"))
         return event
 
     def begin_processing_event(self, event):
@@ -368,20 +369,20 @@ class ZengoProcessor(object):
             # potentially serialize processing per-ticket such that there isn't
             # doubling up on signals firing
             with self.acquire_ticket_lock(event.remote_ticket_id):
-                # contain updates in a transaction such that if a database error
-                # occurs and this method is already in an atomic block, we can still
-                # record the details of the error in the database
-                with transaction.atomic():
-                    self.process_event(event)
+                self.process_event(event)
 
         except Exception:
-            logger.error(
-                "Failed to process event {}: \n{}".format(
-                    event.id, traceback.format_exc()
-                )
+            logger.exception(
+                "Failed to process Zendesk event",
+                extra=dict(
+                    event_id=event.id,
+                ),
             )
+            # Attempt to store a traceback in our DB for convenience and legacy's sake.
+            # The earlier call to `logger.exception` should be ideally surfaced via dev
+            # error reporting (Sentry, etc)
             event.error = traceback.format_exc()
-            event.save(update_fields=("error",))
+            event.save(update_fields=("error", "updated_at"))
             raise
 
     def process_event(self, event):
