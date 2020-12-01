@@ -2,7 +2,6 @@
 
 import json
 
-
 new_ticket = json.loads(
     r"""{
   "ticket": {
