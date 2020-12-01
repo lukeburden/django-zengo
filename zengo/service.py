@@ -20,6 +20,7 @@ from zenpy.lib.exception import APIException
 from . import models, signals, strings
 from .settings import app_settings
 
+
 logger = logging.getLogger(__name__)
 
 

@@ -12,6 +12,7 @@ from django.utils import timezone
 from konst import Constant, Constants
 from konst.models.fields import ConstantChoiceCharField
 
+
 # As the source is always Zendesk, we are permissive regarding length of URLs
 TextURLField = partial(models.TextField, validators=[URLValidator()])  # noqa
 

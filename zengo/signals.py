@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 from django.dispatch import Signal
 
+
 # fired any time a ticket is newly created
 ticket_created = Signal(providing_args=["ticket", "context"])
 

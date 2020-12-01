@@ -1,5 +1,6 @@
 from setuptools import find_packages, setup
 
+
 name = "django-zengo"
 description = "Integrate Zendesk Support and your Django app"
 author = "Luke Burden"
