@@ -17,9 +17,7 @@ from zenpy import Zenpy
 from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
 
-from . import models
-from . import signals
-from . import strings
+from . import models, signals, strings
 from .settings import app_settings
 
 

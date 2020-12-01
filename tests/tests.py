@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import json
 from copy import copy
+import json
+
+from django.core.exceptions import ValidationError
 
 import dateutil
 
-from django.core.exceptions import ValidationError
 
 try:
     from django.urls import reverse
@@ -15,13 +16,10 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 from model_mommy import mommy
-
 import pytest
-
 import responses
 
-from zengo import service
-from zengo import strings
+from zengo import service, strings
 from zengo.models import Comment, Event, Ticket
 
 from . import api_responses
