@@ -178,7 +178,7 @@ class Event(models.Model):
     raw_data = models.TextField(max_length=1024)
 
     # the remote ticket ID extracted from the data
-    remote_ticket_id = models.PositiveIntegerField(null=True, blank=True)
+    remote_ticket_id = models.BigIntegerField(null=True, blank=True)
 
     # if processing failed, an error will appear here
     error = models.TextField(null=True, blank=True)
