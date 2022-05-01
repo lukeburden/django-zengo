@@ -35,119 +35,119 @@ jobs:
   checkqa:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment:
           - TOXENV=checkqa
           - UPLOAD_COVERAGE=0
   py36dj22:
     <<: *common
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
         environment: TOXENV=py36-dj22
   py36dj30:
     <<: *common
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
         environment: TOXENV=py36-dj30
   py36dj31:
     <<: *common
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
         environment: TOXENV=py36-dj31
   py36dj32:
     <<: *common
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
         environment: TOXENV=py36-dj32
   py36djmaster:
     <<: *common
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
         environment: TOXENV=py36-djmaster
   py37dj22:
     <<: *common
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
         environment: TOXENV=py37-dj22
   py37dj30:
     <<: *common
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
         environment: TOXENV=py37-dj30
   py37dj31:
     <<: *common
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
         environment: TOXENV=py37-dj31
   py37dj32:
     <<: *common
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
         environment: TOXENV=py37-dj32
   py37djmaster:
     <<: *common
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
         environment: TOXENV=py37-djmaster
   py38dj22:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-dj22
   py38dj30:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-dj30
   py38dj31:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-dj31
   py38dj32:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-dj32
   py38dj40:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-dj40
   py38djmaster:
     <<: *common
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
         environment: TOXENV=py38-djmaster
   py39dj22:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-dj22
   py39dj30:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-dj30
   py39dj31:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-dj31
   py39dj32:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-dj32
   py39dj40:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-dj40
   py39djmaster:
     <<: *common
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
         environment: TOXENV=py39-djmaster
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
