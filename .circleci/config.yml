@@ -1,12 +1,14 @@
 version: 2.0
 
-common: &common
+common:
+  &common
   working_directory: ~/repo
   steps:
     - checkout
     - restore_cache:
         keys:
-          - v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
+          - v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{
+            checksum "tox.ini" }}
           - v4-deps-
     - run:
         name: install dependencies
@@ -26,7 +28,8 @@ common: &common
           - ~/.cache/pip
           - ~/.local
           - ./eggs
-        key: v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum "tox.ini" }}
+        key: v4-deps-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}-{{ checksum
+          "tox.ini" }}
 
 jobs:
   checkqa:
@@ -40,98 +43,84 @@ jobs:
     <<: *common
     docker:
       - image: circleci/python:3.6
-        environment:
-          TOXENV=py36-dj22
+        environment: TOXENV=py36-dj22
   py36dj30:
     <<: *common
     docker:
       - image: circleci/python:3.6
-        environment:
-          TOXENV=py36-dj30
+        environment: TOXENV=py36-dj30
   py36dj31:
     <<: *common
     docker:
       - image: circleci/python:3.6
-        environment:
-          TOXENV=py36-dj31
+        environment: TOXENV=py36-dj31
   py36djmaster:
     <<: *common
     docker:
       - image: circleci/python:3.6
-        environment:
-          TOXENV=py36-djmaster
+        environment: TOXENV=py36-djmaster
   py37dj22:
     <<: *common
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV=py37-dj22
+        environment: TOXENV=py37-dj22
   py37dj30:
     <<: *common
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV=py37-dj30
+        environment: TOXENV=py37-dj30
   py37dj31:
     <<: *common
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV=py37-dj31
+        environment: TOXENV=py37-dj31
   py37djmaster:
     <<: *common
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV=py37-djmaster
+        environment: TOXENV=py37-djmaster
   py38dj22:
     <<: *common
     docker:
       - image: circleci/python:3.8
-        environment:
-          TOXENV=py38-dj22
+        environment: TOXENV=py38-dj22
   py38dj30:
     <<: *common
     docker:
       - image: circleci/python:3.8
-        environment:
-          TOXENV=py38-dj30
+        environment: TOXENV=py38-dj30
   py38dj31:
     <<: *common
     docker:
       - image: circleci/python:3.8
-        environment:
-          TOXENV=py38-dj31
+        environment: TOXENV=py38-dj31
   py38djmaster:
     <<: *common
     docker:
       - image: circleci/python:3.8
-        environment:
-          TOXENV=py38-djmaster
+        environment: TOXENV=py38-djmaster
   py39dj22:
     <<: *common
     docker:
       - image: circleci/python:3.9
-        environment:
-          TOXENV=py39-dj22
+        environment: TOXENV=py39-dj22
   py39dj30:
     <<: *common
     docker:
       - image: circleci/python:3.9
-        environment:
-          TOXENV=py39-dj30
+        environment: TOXENV=py39-dj30
   py39dj31:
     <<: *common
     docker:
       - image: circleci/python:3.9
-        environment:
-          TOXENV=py39-dj31
+        environment: TOXENV=py39-dj31
   py39djmaster:
     <<: *common
     docker:
       - image: circleci/python:3.9
-        environment:
-          TOXENV=py39-djmaster
+        environment: TOXENV=py39-djmaster
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
 
 workflows:
   version: 2
