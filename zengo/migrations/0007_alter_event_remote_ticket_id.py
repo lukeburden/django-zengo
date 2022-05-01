@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('zengo', '0006_auto_20200310_1733'),
+        ("zengo", "0006_auto_20200310_1733"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='event',
-            name='remote_ticket_id',
+            model_name="event",
+            name="remote_ticket_id",
             field=models.BigIntegerField(blank=True, null=True),
         ),
     ]
