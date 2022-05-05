@@ -180,7 +180,7 @@ class ZengoService(object):
                     "Failed to update remote ZD user. Error: %s " % exc)
                 # Even if the email changed above, we failed to update it here
                 # so we should not be doing the next step for email_changed
-                email_changed = False
+                return
 
         if email_changed:
             # then in addition to the above, we have to mark the newly
