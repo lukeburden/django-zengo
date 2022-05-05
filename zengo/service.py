@@ -122,7 +122,8 @@ class ZengoService(object):
                     is_definite_match,
                 ) = self.get_remote_zd_user_for_local_user(local_user)
             else:
-                raise
+                raise ZengoException("Failed to create remote Zendesk user for "
+                                     "local user %s. Error: %s" % (local_user, a))
         return remote_zd_user
 
     def get_or_create_remote_zd_user_for_local_user(self, local_user):
