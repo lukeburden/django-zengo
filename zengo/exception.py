@@ -1,0 +1,2 @@
+class ZengoException(Exception):
+    pass

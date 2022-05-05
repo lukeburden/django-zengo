@@ -18,6 +18,7 @@ from zenpy.lib.api_objects import User as RemoteZendeskUser
 from zenpy.lib.exception import APIException
 
 from . import models, signals, strings
+from .exception import ZengoException
 from .settings import app_settings
 
 
@@ -186,9 +187,15 @@ class ZengoService(object):
                     break
 
     def update_or_create_remote_zd_user(self, local_user):
-        remote_zd_user, is_definite_match = self.get_remote_zd_user_for_local_user(
-            local_user
-        )
+        try:
+            remote_zd_user, is_definite_match = \
+                self.get_remote_zd_user_for_local_user(
+                    local_user
+                )
+        except APIException as exc:
+            raise ZengoException("Failed to query remote Zendesk user for local"
+                                 "user %s. Error: %s" % (local_user, exc))
+
         if remote_zd_user and is_definite_match:
             # check if we need to do any updates
             self.update_remote_zd_user_for_local_user(local_user, remote_zd_user)
