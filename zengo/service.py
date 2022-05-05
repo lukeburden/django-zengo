@@ -173,7 +173,14 @@ class ZengoService(object):
             email_changed = True
 
         if changed:
-            remote_zd_user = self.client.users.update(remote_zd_user)
+            try:
+                remote_zd_user = self.client.users.update(remote_zd_user)
+            except APIException as exc:
+                logger.error(
+                    "Failed to update remote ZD user. Error: %s " % exc)
+                # Even if the email changed above, we failed to update it here
+                # so we should not be doing the next step for email_changed
+                email_changed = False
 
         if email_changed:
             # then in addition to the above, we have to mark the newly
