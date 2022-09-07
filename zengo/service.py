@@ -158,7 +158,11 @@ class ZengoService(object):
         changed = False
         email_changed = False
 
-        if self.get_local_user_name(local_user) != remote_zd_user.name:
+        # We have some cases when there is a missing name
+        # We need to investigate that but for now here we should avoid
+        # crashing on it (because Zendesk API will refuse an empty name)
+        if self.get_local_user_name(local_user) and \
+                self.get_local_user_name(local_user) != remote_zd_user.name:
             remote_zd_user.name = self.get_local_user_name(local_user)
             changed = True
 
